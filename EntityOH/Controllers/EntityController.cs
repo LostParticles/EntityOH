@@ -104,6 +104,46 @@ namespace EntityOH.Controllers
             return ets;
         }
 
+        
+        public ICollection<Entity> SelectPaged(int pageIndex, int pageItemsCount, out int totalDiscoveredCount)
+        {
+
+            string pid = EntityRuntime<Entity>.PhysicalName + "." +
+                EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
+
+            string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1}";
+            
+            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
+
+            string SelectPaged = "SELECT * FROM ({1}) AS PagedQuery WHERE Row_Count BETWEEN {2} and {3}";
+
+
+            int fromRow = pageIndex * pageItemsCount;
+
+            int toRow = fromRow + pageItemsCount;
+
+            fromRow++;  // increase one to align the first item on the first of the page.
+
+            string FinalSelect = string.Format(SelectPaged, FieldsList, SelectAll, fromRow, toRow);
+
+            totalDiscoveredCount = (int)_Connection.ExecuteScalar(_Connection.GetCountCommand<Entity>());
+
+            List<Entity> ets = new List<Entity>();
+
+            using (var reader = _Connection.ExecuteReader(FinalSelect))
+            {
+                while (reader.Read())
+                {
+                    ets.Add(EntityRuntime<Entity>.MappingFunction(reader));
+                }
+                reader.Close();
+            }
+
+            return ets;
+
+
+        }
+
 
         /// <summary>
         /// Select based on where condition.
@@ -134,38 +174,45 @@ namespace EntityOH.Controllers
         }
 
 
-        /// <summary>
-        /// Select certain fields and return the objects with only those fields.
-        /// </summary>
-        /// <param name="fieldsList"></param>
-        /// <returns></returns>
-        public ICollection<Entity> SelectPartially(params string[] fields)
+        public ICollection<Entity> SelectPaged(string whereClause, int pageIndex, int pageItemsCount, out int totalDiscoveredCount)
         {
-            string SelectAllStatement = "SELECT {0} FROM {1}";
 
-            string fieldsList=string.Empty;
-            foreach (string fld in fields) fieldsList += fld + ",";
-            fieldsList = fieldsList.TrimEnd(',');
-             
-            string SelectAll = string.Format(SelectAllStatement, fieldsList, FromExpression);
+            string pid = EntityRuntime<Entity>.PhysicalName + "." +
+                EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
+
+            string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1} WHERE {2}";
+
+            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression, whereClause);
+
+            string SelectPaged = "SELECT * FROM ({1}) AS PagedQuery WHERE Row_Count BETWEEN {2} and {3}";
+
+
+            int fromRow = pageIndex * pageItemsCount;
+
+            int toRow = fromRow + pageItemsCount;
+
+            fromRow++;  // increase one to align the first item on the first of the page.
+
+            string FinalSelect = string.Format(SelectPaged, FieldsList, SelectAll, fromRow, toRow);
+
+            totalDiscoveredCount = (int)_Connection.ExecuteScalar(_Connection.GetCountCommand<Entity>(whereClause));
 
             List<Entity> ets = new List<Entity>();
 
-            using (var reader = _Connection.ExecuteReader(SelectAll))
+            using (var reader = _Connection.ExecuteReader(FinalSelect))
             {
-                SmartReader sr = new SmartReader(reader);
-                while (sr.Read())
+                while (reader.Read())
                 {
-
-                    ets.Add(EntityRuntime<Entity>.PartialMappingFunction(sr));
+                    ets.Add(EntityRuntime<Entity>.MappingFunction(reader));
                 }
-
                 reader.Close();
             }
-            
+
             return ets;
+
+
         }
-       
+
 
         /// <summary>
         /// Get the count.

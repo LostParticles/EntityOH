@@ -1,0 +1,34 @@
+- Entity public properties are mapped directly with the corresponding table 
+
+- Inheritance is implemented with by inner join one to one relation.
+
+- Foriegn Keys implemented as objects to another classes
+    (only when these classes are valid entities)
+
+
+Problem one:
+	- as I fill the object directly by left joins
+	  the problem appear if the object itself has a foriegn key to another object
+
+
+	- I haven't tested inserting entity with foriegn object.
+
+
+
+Problem Two:
+	- Multi inheritance is not supported also
+		A:B:C   C parent is B and B parent is A 
+
+		then I still can't build the from clause to include all of these 
+
+
+Three:
+	we need paging in the library 
+	(the paging will be only supported for sql 2005 and later versions for now)
+
+
+Four: DDL 
+	Creating Table added (but not tested)
+
+
+Five: Think about olso and how to merge it with this library ;)

@@ -221,7 +221,30 @@ namespace EntityOH.Controllers
             return ofrom;
 
         }
-    
+
+
+
+
+        internal static string SqlTypeFromCLRType(Type type, bool treatDateTimeAsDate = false)
+        {
+            if (type == typeof(byte)) return "TinyInt";
+            if (type == typeof(short)) return "SmallInt";
+            if (type == typeof(int)) return "Int";
+            if (type == typeof(long)) return "BigInt";
+
+            if (type == typeof(DateTime))
+            {
+                if (treatDateTimeAsDate) return "Date";
+                else return "DateTime";
+            }
+
+            if (type == typeof(string)) return "NVarChar(MAX)";
+
+
+
+            throw new NotImplementedException(type.ToString() + " Type hasn't corresponding sql type");
+
+        }
     
     }
 }
