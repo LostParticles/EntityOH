@@ -91,6 +91,8 @@ namespace EntityOH.Controllers.Connections
         }
 
 
+
+
         public void ExecuteNonQuery(DbCommand command)
         {
             if (_InternalConnection.State == ConnectionState.Closed) _InternalConnection.Open();
@@ -193,16 +195,39 @@ namespace EntityOH.Controllers.Connections
 
         internal DbCommand GetCountCommand<Entity>()
         {
-            string SelectTemplate = "SELECT COUNT(*) FROM " + EntityRuntime<Entity>.PhysicalName;
+            string SelectTemplate = "SELECT COUNT(*) FROM " + EntityRuntimeHelper.FromClause(typeof(Entity));
 
             var finalSelect = string.Format(SelectTemplate);
 
             return new SqlCommand(finalSelect);
         }
 
+        internal DbCommand GetCountCommand<Entity>(string whereClause)
+        {
+            string SelectTemplate = "SELECT COUNT(*) FROM " + EntityRuntimeHelper.FromClause(typeof(Entity));
+            SelectTemplate += " WHERE " + whereClause;
+
+
+            var finalSelect = string.Format(SelectTemplate);
+
+            return new SqlCommand(finalSelect);
+        }
+
+
+
         internal DbCommand GetAggregateFunctionCommand<Entity>(string aggregateFunction, string field)
         {
-            string SelectTemplate = "SELECT {0}({1}) FROM " + EntityRuntime<Entity>.PhysicalName;
+            string SelectTemplate = "SELECT {0}({1}) FROM " + EntityRuntimeHelper.FromClause(typeof(Entity));
+
+            var finalSelect = string.Format(SelectTemplate, aggregateFunction, field);
+
+            return new SqlCommand(finalSelect);
+        }
+
+        internal DbCommand GetAggregateFunctionCommand<Entity>(string whereClause, string aggregateFunction, string field)
+        {
+            string SelectTemplate = "SELECT {0}({1}) FROM " + EntityRuntimeHelper.FromClause(typeof(Entity));
+            SelectTemplate += " WHERE " + whereClause;
 
             var finalSelect = string.Format(SelectTemplate, aggregateFunction, field);
 
@@ -276,6 +301,51 @@ namespace EntityOH.Controllers.Connections
             sq.CommandType = CommandType.StoredProcedure;
 
             return sq;
+        }
+
+
+        internal DbCommand GetCreateTableCommand<Entity>()
+        {
+
+            string tblPhysicalName = EntityRuntimeHelper.EntityPhysicalName(typeof(Entity));
+            string cTable = "CREATE TABLE [" + tblPhysicalName + "] (\n{0}\n);";
+
+            StringBuilder flds = new StringBuilder();
+
+
+            foreach (var f in EntityRuntimeHelper.EntityRuntimeFields(typeof(Entity)))
+            {
+                flds.Append('[');
+                flds.Append(f.PhysicalName);
+                flds.Append(']');
+                flds.Append(" ");
+                flds.Append(EntityRuntimeHelper.SqlTypeFromCLRType(f.FieldType));
+
+                if (f.Identity) flds.Append(" IDENTITY(1,1)");
+                if (f.Primary) flds.Append(" NOT NULL");
+                else flds.Append(" NULL");
+
+                flds.Append(",\n");
+
+            }
+
+            // make the constraints
+
+            foreach (var f in EntityRuntimeHelper.EntityRuntimeFields(typeof(Entity)))
+            {
+                if (f.Primary)
+                {
+                    flds.Append("constraint [PK_" + tblPhysicalName + "] primary key clustered ([" + f.PhysicalName + "])");
+                    flds.Append(',');
+                }
+            }
+
+            string CreateTable = string.Format(cTable, flds.ToString().TrimEnd(','));
+
+
+            return new SqlCommand(CreateTable);
+
+            
         }
 
 

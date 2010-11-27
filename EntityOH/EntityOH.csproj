@@ -75,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attributes\EntityAttribute.cs" />
+    <Compile Include="Controllers\EntityController_DDL.cs" />
     <Compile Include="Controllers\EntityController_EntityChildren.cs" />
     <Compile Include="Controllers\EntityController.cs" />
     <Compile Include="Controllers\EntityFieldRuntime.cs" />

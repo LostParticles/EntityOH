@@ -69,5 +69,41 @@ namespace EntityOH.Controllers
 
             return ets;
         }
+
+
+        /// <summary>
+        /// Select certain fields and return the objects with only those fields.
+        /// </summary>
+        /// <param name="fieldsList"></param>
+        /// <returns></returns>
+        public ICollection<Entity> SelectPartially(params string[] fields)
+        {
+            string SelectAllStatement = "SELECT {0} FROM {1}";
+
+            string fieldsList = string.Empty;
+            foreach (string fld in fields) fieldsList += fld + ",";
+            fieldsList = fieldsList.TrimEnd(',');
+
+            string SelectAll = string.Format(SelectAllStatement, fieldsList, FromExpression);
+
+            List<Entity> ets = new List<Entity>();
+
+            using (var reader = _Connection.ExecuteReader(SelectAll))
+            {
+                SmartReader sr = new SmartReader(reader);
+                while (sr.Read())
+                {
+
+                    ets.Add(EntityRuntime<Entity>.PartialMappingFunction(sr));
+                }
+
+                reader.Close();
+            }
+
+            return ets;
+        }
+       
+
+
     }
 }
