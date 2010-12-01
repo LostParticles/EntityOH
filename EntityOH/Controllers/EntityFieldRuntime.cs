@@ -65,7 +65,7 @@ namespace EntityOH.Controllers
             PhysicalName = info.Name;
             FieldType = info.PropertyType;
             
-            if (info.PropertyType.IsValueType == false && info.PropertyType != typeof(string))
+            if (info.PropertyType.IsValueType == false && info.PropertyType != typeof(string) && info.PropertyType != typeof(byte[]))
             {
                 // then it must be a foriegn reference field to another entity
                 // that because the constructor will not be called unless the type of the field is pointing to another entity.

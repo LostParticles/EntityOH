@@ -27,7 +27,7 @@ namespace EntityOH.Controllers
             foreach (var pp in PublicWritablProperties)
             {
                 // discover the runtime of field whether it is value type or string.
-                if (pp.PropertyType.IsValueType || pp.PropertyType == typeof(string))
+                if (pp.PropertyType.IsValueType || pp.PropertyType == typeof(string) || pp.PropertyType == typeof(byte[]))
                 {
                     FilteredProperties.Add(pp);
                 }

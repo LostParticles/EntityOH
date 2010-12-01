@@ -80,12 +80,59 @@ namespace EntityOH.Controllers
             }
         }
 
+
+
+
+        private List<string> VolatilePreOperationsStatements = new List<string>();
+
+        private List<string> StaticPreOperationsStatements = new List<string>();
+
+
+
+        /// <summary>
+        /// Add a volatile pre opertations before executing any controller action.
+        /// the operations are won't be remain after the controller action.
+        /// </summary>
+        /// <param name="sql"></param>
+        public void PreExecute(string sql)
+        {
+            VolatilePreOperationsStatements.Add(sql);
+        }
+
+        public void StaticPreExecute(string sql)
+        {
+            StaticPreOperationsStatements.Add(sql);
+        }
+
+        private void ExecutePreOperations()
+        {
+            foreach (var op in StaticPreOperationsStatements)
+            {
+                var cmd = _Connection.GetExecuteCommand(op);
+
+                _Connection.ExecuteNonQueryWithoutClose(cmd);
+            }
+
+            foreach (var op in VolatilePreOperationsStatements)
+            {
+                var cmd = _Connection.GetExecuteCommand(op);
+
+                _Connection.ExecuteNonQueryWithoutClose(cmd);
+            }
+
+            VolatilePreOperationsStatements.Clear();
+        }
+
+
+
         /// <summary>
         /// Get all the records of entity in database.
         /// </summary>
         /// <returns></returns>
         public ICollection<Entity> Select()
         {
+            ExecutePreOperations();
+
             string SelectAllStatement = "SELECT {0} FROM {1}";
 
             string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
@@ -107,6 +154,9 @@ namespace EntityOH.Controllers
         
         public ICollection<Entity> SelectPaged(int pageIndex, int pageItemsCount, out int totalDiscoveredCount)
         {
+
+            ExecutePreOperations();
+
 
             string pid = EntityRuntime<Entity>.PhysicalName + "." +
                 EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
@@ -152,6 +202,11 @@ namespace EntityOH.Controllers
         /// <returns></returns>
         public ICollection<Entity> Select(string whereClause)
         {
+
+            ExecutePreOperations();
+
+
+
             string SelectAllStatement = "SELECT {0} FROM {1} WHERE {2}";
 
 
@@ -176,6 +231,9 @@ namespace EntityOH.Controllers
 
         public ICollection<Entity> SelectPaged(string whereClause, int pageIndex, int pageItemsCount, out int totalDiscoveredCount)
         {
+
+            ExecutePreOperations();
+
 
             string pid = EntityRuntime<Entity>.PhysicalName + "." +
                 EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
@@ -220,6 +278,8 @@ namespace EntityOH.Controllers
         /// <returns></returns>
         public long Count()
         {
+            ExecutePreOperations();
+
             long result = 0;
             using (var CountCommand = _Connection.GetCountCommand<Entity>())
             {
@@ -235,6 +295,8 @@ namespace EntityOH.Controllers
         /// <returns></returns>
         public double Sum(string field)
         {
+            ExecutePreOperations();
+
             double result = 0;
             using (var SumCommand = _Connection.GetAggregateFunctionCommand<Entity>("SUM", field))
             {
@@ -251,6 +313,8 @@ namespace EntityOH.Controllers
         /// <returns></returns>
         public void Insert(Entity entity)
         {
+            ExecutePreOperations();
+
             EntityFieldRuntime IdentityFieldRuntime;
 
             using (DbCommand command = _Connection.GetInsertCommand<Entity>(out IdentityFieldRuntime))
@@ -293,6 +357,8 @@ namespace EntityOH.Controllers
         /// <param name="entity"></param>
         public void SelectEntity(ref Entity entity)
         {
+            ExecutePreOperations();
+
             using (DbCommand command = _Connection.GetSelectCommand<Entity>())
             {
                 foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
@@ -321,6 +387,8 @@ namespace EntityOH.Controllers
         /// <param name="entity"></param>
         public void DeleteEntity(Entity entity)
         {
+            ExecutePreOperations();
+
             using (DbCommand command = _Connection.GetDeleteCommand<Entity>())
             {
                 foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
@@ -340,6 +408,8 @@ namespace EntityOH.Controllers
 
         public void Update(Entity entity)
         {
+            ExecutePreOperations();
+
             using (DbCommand command = _Connection.GetUpdateCommand<Entity>())
             {
 
@@ -353,6 +423,23 @@ namespace EntityOH.Controllers
         }
 
 
+        /// <summary>
+        /// Execute and sql statement against the database provider.
+        /// </summary>
+        /// <param name="sql"></param>
+        public int Execute(string sql)
+        {
+            ExecutePreOperations();
+
+            var cmd = _Connection.GetExecuteCommand(sql);
+
+            return _Connection.ExecuteNonQuery(cmd);
+        }
+
+
+
+
+
 
         /// <summary>
         /// Execute procedure that returns collection of the entity.
@@ -362,6 +449,8 @@ namespace EntityOH.Controllers
         /// <returns></returns>
         public ICollection<Entity> ExecuteProcedure(string procName)
         {
+            ExecutePreOperations();
+
             List<Entity> ets = new List<Entity>();
 
             using (var command = _Connection.GetStoredProcedureCommand<Entity>(procName))
