@@ -91,18 +91,34 @@ namespace EntityOH.Controllers.Connections
         }
 
 
+        /// <summary>
+        /// Execute the operation without closing the underlieng connection.
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        public int ExecuteNonQueryWithoutClose(DbCommand command)
+        {
+            if (_InternalConnection.State == ConnectionState.Closed) _InternalConnection.Open();
 
+            command.Connection = _InternalConnection;
 
-        public void ExecuteNonQuery(DbCommand command)
+            int returnvalue = command.ExecuteNonQuery();
+
+            return returnvalue;
+
+        }
+
+        public int ExecuteNonQuery(DbCommand command)
         {
             if (_InternalConnection.State == ConnectionState.Closed) _InternalConnection.Open();
 
             command.Connection = _InternalConnection;
             
-            command.ExecuteNonQuery();
+            int returnvalue = command.ExecuteNonQuery();
 
             _InternalConnection.Close();
 
+            return returnvalue;
         }
 
 
@@ -348,6 +364,18 @@ namespace EntityOH.Controllers.Connections
             
         }
 
+
+
+        /// <summary>
+        /// Returns command for any select command.
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <returns></returns>
+        internal DbCommand GetExecuteCommand(string sql)
+        {
+
+            return new SqlCommand(sql);
+        }
 
         #region IDisposable Members
 

@@ -25,6 +25,8 @@ namespace EntityOH.Controllers
         /// <returns></returns>
         public ICollection<ChildEntity> SelectChildren<ChildEntity>(Entity parentEntity)
         {
+            ExecutePreOperations();
+
             string SelectAllStatement = "SELECT {0} FROM {1} WHERE {2}";
 
             string FieldsList=string.Empty;
@@ -78,6 +80,8 @@ namespace EntityOH.Controllers
         /// <returns></returns>
         public ICollection<Entity> SelectPartially(params string[] fields)
         {
+            ExecutePreOperations();
+
             string SelectAllStatement = "SELECT {0} FROM {1}";
 
             string fieldsList = string.Empty;

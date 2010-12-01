@@ -22,6 +22,8 @@ namespace EntityOH.Controllers
         /// </summary>
         public void CreateTable()
         {
+            ExecutePreOperations();
+
             var cmd = _Connection.GetCreateTableCommand<Entity>();
 
             _Connection.ExecuteNonQuery(cmd);
