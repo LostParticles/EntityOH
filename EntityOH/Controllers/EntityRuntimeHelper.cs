@@ -9,6 +9,10 @@ namespace EntityOH.Controllers
 {
     internal static class EntityRuntimeHelper
     {
+
+        internal const string AliasSeparator = "__";
+
+
         /// <summary>
         /// Gets the entity suitable properties that can be filled from reading in database.
         /// </summary>
@@ -63,12 +67,21 @@ namespace EntityOH.Controllers
 
                 if (vv != null)
                 {
-                    ph = vv.PhysicalName;
+                    
+                    if (string.IsNullOrEmpty(vv.PhysicalName)) ph = entityType.Name;
+                    else ph = vv.PhysicalName;
+
                     EntitiesPhysicalName.Add(entityType, ph);
                 }
                 else
                 {
-                    throw new EntityException("This type is not physical entity");
+                    // no attribute found
+                    // use the name of the class as the name of the table.
+
+                    ph = entityType.Name;
+                    EntitiesPhysicalName.Add(entityType, ph);
+
+                    //throw (new Exception(ph));
                 }
             }
 
@@ -142,8 +155,12 @@ namespace EntityOH.Controllers
                 if (fld.CalculatedExpression)
                 {
                     // ignore the table name in case of calculated expressoins
-                    // Format:  TableName.FieldPhysicalNameExpression AS [EntityName.PropertyName]
-                    _FieldsList.Add(fld.PhysicalName + " AS [" + entityType.Name + "." + fld.FieldPropertyInfo.Name + "]");
+                    // Format:  TableName.FieldPhysicalNameExpression AS [EntityName__PropertyName]
+                    //   I have changed separator between [] from dot '.' into colon ':' because ole db driver didn't like dot inside alias name
+                    //   then changed again into '_' because after testing with my sql it made an error
+                    //    also omitted '[' ']' from begining and ending of alias
+
+                    _FieldsList.Add(fld.PhysicalName + " AS " + entityType.Name + AliasSeparator + fld.FieldPropertyInfo.Name);
                 }
                 else
                 {
@@ -151,13 +168,13 @@ namespace EntityOH.Controllers
                     {
                         if (fld.FieldPropertyInfo.DeclaringType == bt)
                         {
-                            _FieldsList.Add(BaseTableName + "." + fld.PhysicalName + " AS [" + entityType.Name + "." + fld.FieldPropertyInfo.Name + "]");
+                            _FieldsList.Add(BaseTableName + "." + fld.PhysicalName + " AS " + entityType.Name + AliasSeparator + fld.FieldPropertyInfo.Name);
                             goto gg;
                         }
                     }
 
-                    // Format:  TableName.FieldPhysicalName AS [EntityName.PropertyName]
-                    _FieldsList.Add(TableName + "." + fld.PhysicalName + " AS [" + entityType.Name + "." + fld.FieldPropertyInfo.Name + "]");
+                    // Format:  TableName.FieldPhysicalName AS EntityName:PropertyName
+                    _FieldsList.Add(TableName + "." + fld.PhysicalName + " AS " + entityType.Name + AliasSeparator + fld.FieldPropertyInfo.Name );
                     
                 }
             gg:

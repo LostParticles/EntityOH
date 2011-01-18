@@ -13,8 +13,6 @@ Problem one:
 
 	- I haven't tested inserting entity with foriegn object.
 
-
-
 Problem Two:
 	- Multi inheritance is not supported also
 		A:B:C   C parent is B and B parent is A 
@@ -32,3 +30,7 @@ Four: DDL
 
 
 Five: Think about olso and how to merge it with this library ;)
+
+
+Six: Supporing other databases other than sql server (mdb access for example)
+

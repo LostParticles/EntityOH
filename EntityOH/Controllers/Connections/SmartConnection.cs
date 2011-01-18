@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Data.Common;
+using System.Data.OleDb;
 
 namespace EntityOH.Controllers.Connections
 {
@@ -49,20 +50,40 @@ namespace EntityOH.Controllers.Connections
             private set;
         }
 
-        SqlConnection _InternalConnection;
+        DbConnection _InternalConnection;
+        SmartConnectionType _ConnectionType;
 
         private SmartConnection(string connectionString)
         {
 
             ConnectionString = connectionString;
 
-            _InternalConnection = new SqlConnection(ConnectionString);
+            // we need to know the provider.
+            if (ConnectionString.Contains("OLEDB"))
+            {
+                _InternalConnection = new OleDbConnection(ConnectionString);
+                _ConnectionType = SmartConnectionType.OleConnection;
+            }
+            else
+            {
+                // connection here for sql server.
+                _InternalConnection = new SqlConnection(ConnectionString);
+                _ConnectionType = SmartConnectionType.SqlServerConnection;
+            }
 
         }
 
         public IDataReader ExecuteReader(string text)
         {
-            SqlCommand cmd = new SqlCommand(text, _InternalConnection);
+            DbCommand cmd = null;
+            if (_ConnectionType == SmartConnectionType.SqlServerConnection)
+            {
+                cmd = new SqlCommand(text, (SqlConnection)_InternalConnection);
+            }
+            else
+            {
+                cmd = new OleDbCommand(text, (OleDbConnection)_InternalConnection);
+            }
 
             if (_InternalConnection.State == ConnectionState.Closed) _InternalConnection.Open();
 

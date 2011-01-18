@@ -82,9 +82,15 @@ namespace EntityOH.Controllers
 
 
 
-
+        /// <summary>
+        /// Hold some actions that is cleared after the next command of controller executed.
+        /// </summary>
         private List<string> VolatilePreOperationsStatements = new List<string>();
 
+
+        /// <summary>
+        /// Hold static actions that executed every time any command of controller executed.
+        /// </summary>
         private List<string> StaticPreOperationsStatements = new List<string>();
 
 
@@ -152,6 +158,13 @@ namespace EntityOH.Controllers
         }
 
         
+        /// <summary>
+        /// Select paged data based on parameters.
+        /// </summary>
+        /// <param name="pageIndex"></param>
+        /// <param name="pageItemsCount"></param>
+        /// <param name="totalDiscoveredCount"></param>
+        /// <returns></returns>
         public ICollection<Entity> SelectPaged(int pageIndex, int pageItemsCount, out int totalDiscoveredCount)
         {
 

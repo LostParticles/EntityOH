@@ -58,10 +58,9 @@ namespace EntityOH.Controllers
                 FieldsRuntime.Add(pp.Name, new EntityFieldRuntime(pp));
             }
 
-            var attr = (EntityAttribute)EntityType.GetCustomAttributes(typeof(EntityAttribute), false).FirstOrDefault();
 
             // Set the true name of the entity in the database  (the mapping I mean)
-            PhysicalName = attr.PhysicalName.Trim();
+            PhysicalName = EntityRuntime<Entity>.PhysicalName;
 
 
             Inherited = EntityRuntimeHelper.IsEntityInherited(EntityType, out BaseEntityType);
@@ -82,7 +81,7 @@ namespace EntityOH.Controllers
             foreach (var fr in FieldsRuntime)
             {
                 //  int IDataReader.GetOrdinal(string pp.Name)
-                var ReaderOrdinal = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetOrdinal"), Expression.Constant(EntityType.Name + "." + fr.Value.FieldPropertyInfo.Name)); //selecting inside reader with the property name because we are renaming the return columns with the names of the entity properties.
+                var ReaderOrdinal = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetOrdinal"), Expression.Constant(EntityType.Name + EntityRuntimeHelper.AliasSeparator + fr.Value.FieldPropertyInfo.Name)); //selecting inside reader with the property name because we are renaming the return columns with the names of the entity properties.
                 
                 // object IDataReader.GetObject(int ordinal )
                 var RecordValue = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetValue"), ReaderOrdinal);
@@ -101,7 +100,7 @@ namespace EntityOH.Controllers
                     var RefFields = EntityRuntimeHelper.EntityRuntimeFields(fr.Value.FieldType);
                     foreach (var rf in RefFields)
                     {
-                        var RefReaderOrdinal = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetOrdinal"), Expression.Constant(fr.Value.FieldType.Name + "." + rf.FieldPropertyInfo.Name));
+                        var RefReaderOrdinal = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetOrdinal"), Expression.Constant(fr.Value.FieldType.Name + EntityRuntimeHelper.AliasSeparator + rf.FieldPropertyInfo.Name));
                         var RefRecordValue = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetValue"), RefReaderOrdinal);
                         var RefValue = Expression.Convert(RefRecordValue, rf.FieldType);
                         var Refbinding = Expression.Bind(rf.FieldPropertyInfo, RefValue);
