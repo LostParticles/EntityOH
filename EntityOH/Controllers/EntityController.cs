@@ -157,6 +157,34 @@ namespace EntityOH.Controllers
             return ets;
         }
 
+
+        /// <summary>
+        /// Get all the records of entity in database.
+        /// </summary>
+        /// <returns></returns>
+        public ICollection<Entity> SelectDistinct()
+        {
+            ExecutePreOperations();
+
+            string SelectAllStatement = "SELECT DISTINCT {0} FROM {1}";
+
+            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
+
+            List<Entity> ets = new List<Entity>();
+
+            using (var reader = _Connection.ExecuteReader(SelectAll))
+            {
+                while (reader.Read())
+                {
+                    ets.Add(EntityRuntime<Entity>.MappingFunction(reader));
+                }
+                reader.Close();
+            }
+
+            return ets;
+        }
+
+
         
         /// <summary>
         /// Select paged data based on parameters.
@@ -361,6 +389,44 @@ namespace EntityOH.Controllers
 
         }
 
+
+
+        /// <summary>
+        /// Insert bulk of entities {optimitzed for fast execution)
+        /// </summary>
+        /// <param name="entities"></param>
+        public void Insert(IEnumerable<Entity> entities)
+        {
+            ExecutePreOperations();
+
+            EntityFieldRuntime IdentityFieldRuntime;
+
+            using (DbCommand command = _Connection.GetInsertCommand<Entity>(out IdentityFieldRuntime))
+            {
+                int ie = 0;
+                foreach (var entity in entities)
+                {
+                    foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
+                    {
+                        if (!f.Value.Identity)
+                        {
+                            if (ie == 0)
+                                command.Parameters.Add(_Connection.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                            else
+                            {
+                                // already declared
+                                command.Parameters[_Connection.GetValidParameterName(f.Value.PhysicalName)].Value = f.Value.FieldReader(entity);
+                            }
+                        }
+                    }
+
+                    _Connection.ExecuteNonQuery(command);
+
+                    ie++;
+                }
+            }
+
+        }
 
 
         /// <summary>
