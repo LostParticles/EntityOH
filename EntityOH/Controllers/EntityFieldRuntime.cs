@@ -74,7 +74,7 @@ namespace EntityOH.Controllers
                 Foriegn = true;
                 ForiegnReferenceType = info.PropertyType;
 
-                // go get the first primary field you encounter in the foriegn type.
+                // go get the first {primary field} you encounter in the foriegn type.
                 
                 // and throw exception if there are no primary fields there
                 var fproperties =  EntityRuntimeHelper.EntityProperties(ForiegnReferenceType);

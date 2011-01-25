@@ -22,7 +22,13 @@ namespace EntityOH.Controllers
         /// <summary>
         /// Current Entity Database Physical Name
         /// </summary>
-        public static string PhysicalName { get; private set; }
+        public static string PhysicalName
+        {
+            get
+            {
+                return EntityRuntimeHelper.EntityPhysicalName(typeof(Entity));
+            }
+        }
 
         public static Type BaseEntityType;
 
@@ -58,11 +64,6 @@ namespace EntityOH.Controllers
                 FieldsRuntime.Add(pp.Name, new EntityFieldRuntime(pp));
             }
 
-
-            // Set the true name of the entity in the database  (the mapping I mean)
-            PhysicalName = EntityRuntime<Entity>.PhysicalName;
-
-
             Inherited = EntityRuntimeHelper.IsEntityInherited(EntityType, out BaseEntityType);
 
             // Prepare Mapping Expression
@@ -86,33 +87,43 @@ namespace EntityOH.Controllers
                 // object IDataReader.GetObject(int ordinal )
                 var RecordValue = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetValue"), ReaderOrdinal);
 
-
                 //check if the type of the field is foriegn field.
                 if (fr.Value.Foriegn)
                 {
                     // here I should get the data from the select statement that were executed by left join
 
                     // field is type and its data will be found based on its type name in the reader
-                    // as TypeName.FieldName
+                    // as TypeName__FieldName
 
                     NewExpression NewRefEntity = Expression.New(fr.Value.FieldType);
                     List<MemberBinding> RefBindings = new List<MemberBinding>();
                     var RefFields = EntityRuntimeHelper.EntityRuntimeFields(fr.Value.FieldType);
+
                     foreach (var rf in RefFields)
                     {
-                        var RefReaderOrdinal = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetOrdinal"), Expression.Constant(fr.Value.FieldType.Name + EntityRuntimeHelper.AliasSeparator + rf.FieldPropertyInfo.Name));
-                        var RefRecordValue = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetValue"), RefReaderOrdinal);
-                        var RefValue = Expression.Convert(RefRecordValue, rf.FieldType);
-                        var Refbinding = Expression.Bind(rf.FieldPropertyInfo, RefValue);
+                        // prevent second level indirection in referencing.
+                        if (rf.FieldType.IsValueType == true || rf.FieldType == typeof(string) || rf.FieldType == typeof(byte[]))
+                        {
+                            var RefReaderOrdinal = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetOrdinal"), Expression.Constant(fr.Value.FieldType.Name + EntityRuntimeHelper.AliasSeparator + rf.FieldPropertyInfo.Name));
+                            var RefRecordValue = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("GetValue"), RefReaderOrdinal);
+                            var RefValue = Expression.Convert(RefRecordValue, rf.FieldType);
+                            var Refbinding = Expression.Bind(rf.FieldPropertyInfo, RefValue);
 
-                        RefBindings.Add(Refbinding);
+                            RefBindings.Add(Refbinding);
+                        }
                     }
-                    var RefInitializer = Expression.MemberInit(NewRefEntity, RefBindings.ToArray());
+                    
+                    
+                    var IsValueNull = Expression.Call(RecordParameterExpression, IDataRecordType.GetMethod("IsDBNull"), ReaderOrdinal);
 
-                    var binding = Expression.Bind(fr.Value.FieldPropertyInfo, RefInitializer);
+                    var RefInitializer = Expression.MemberInit(NewRefEntity, RefBindings.ToArray());  //the reference type initialized here
+                    
+                    // binding here should depend if there is value in reader or not.
+                    var Ref = Expression.Condition(IsValueNull, Expression.Constant(null, fr.Value.FieldType), RefInitializer);
+
+                    var binding = Expression.Bind(fr.Value.FieldPropertyInfo, Ref);
 
                     bindings.Add(binding);
-
                 }
                 else
                 {

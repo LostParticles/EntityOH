@@ -160,7 +160,7 @@ namespace EntityOH.Controllers
                     //   then changed again into '_' because after testing with my sql it made an error
                     //    also omitted '[' ']' from begining and ending of alias
 
-                    _FieldsList.Add(fld.PhysicalName + " AS " + entityType.Name + AliasSeparator + fld.FieldPropertyInfo.Name);
+                    _FieldsList.Add("(" + fld.PhysicalName + ") AS " + entityType.Name + AliasSeparator + fld.FieldPropertyInfo.Name);
                 }
                 else
                 {
@@ -173,7 +173,7 @@ namespace EntityOH.Controllers
                         }
                     }
 
-                    // Format:  TableName.FieldPhysicalName AS EntityName:PropertyName
+                    // Format:  TableName.FieldPhysicalName AS EntityName__PropertyName
                     _FieldsList.Add(TableName + "." + fld.PhysicalName + " AS " + entityType.Name + AliasSeparator + fld.FieldPropertyInfo.Name );
                     
                 }

@@ -202,8 +202,13 @@ namespace EntityOH.Controllers.Connections
 
         internal DbParameter GetParameter(string parameterName, object value)
         {
-            SqlParameter sp = new SqlParameter("@" + parameterName, value);
+            SqlParameter sp = new SqlParameter(GetValidParameterName(parameterName), value);
             return sp;
+        }
+
+        internal string GetValidParameterName(string parameterName)
+        {
+            return "@" + parameterName;
         }
 
         internal DbCommand GetSelectCommand<Entity>()
