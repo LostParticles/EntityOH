@@ -31,7 +31,11 @@ namespace EntityOH.Controllers
             foreach (var pp in PublicWritablProperties)
             {
                 // discover the runtime of field whether it is value type or string.
-                if (pp.PropertyType.IsValueType || pp.PropertyType == typeof(string) || pp.PropertyType == typeof(byte[]))
+                if (
+                    pp.PropertyType.IsValueType                // integers and numbers in general.
+                    || pp.PropertyType == typeof(string)       // text ofcourse.
+                    || pp.PropertyType == typeof(byte[])       // bytes of data.
+                    )
                 {
                     FilteredProperties.Add(pp);
                 }
@@ -239,11 +243,17 @@ namespace EntityOH.Controllers
 
         }
 
-
-
-
-        internal static string SqlTypeFromCLRType(Type type, bool treatDateTimeAsDate = false)
+        internal static string SqlTypeFromCLRType(Type clrType, bool treatDateTimeAsDate = false)
         {
+
+            Type type = default(Type);
+
+            if (clrType.IsGenericType && clrType.IsValueType)
+                type = Nullable.GetUnderlyingType(clrType);  //because it is nullable type.
+            else
+                type = clrType;
+
+
             if (type == typeof(byte)) return "TinyInt";
             if (type == typeof(short)) return "SmallInt";
             if (type == typeof(int)) return "Int";
@@ -256,6 +266,12 @@ namespace EntityOH.Controllers
             }
 
             if (type == typeof(string)) return "NVarChar(MAX)";
+
+
+            if (type == typeof(double)) return "Float";
+            if (type == typeof(Single)) return "Real";
+            if (type == typeof(Guid)) return "UniqueIdentifier";
+
 
 
 

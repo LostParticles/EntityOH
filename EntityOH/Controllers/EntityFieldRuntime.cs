@@ -48,7 +48,13 @@ namespace EntityOH.Controllers
         public bool Identity { get; private set; }
 
 
-        public Type FieldType { get; private set; }
+        public Type FieldType
+        {
+            get
+            {
+                return FieldPropertyInfo.PropertyType;
+            }
+        }
 
 
         public PropertyInfo FieldPropertyInfo { get; private set; }
@@ -63,7 +69,7 @@ namespace EntityOH.Controllers
         {
             FieldPropertyInfo = info;
             PhysicalName = info.Name;
-            FieldType = info.PropertyType;
+            
             
             if (info.PropertyType.IsValueType == false && info.PropertyType != typeof(string) && info.PropertyType != typeof(byte[]))
             {
