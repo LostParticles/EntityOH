@@ -246,8 +246,6 @@ namespace EntityOH.Controllers
 
             ExecutePreOperations();
 
-
-
             string SelectAllStatement = "SELECT {0} FROM {1} WHERE {2}";
 
 
@@ -514,10 +512,6 @@ namespace EntityOH.Controllers
 
             return _Connection.ExecuteNonQuery(cmd);
         }
-
-
-
-
 
 
         /// <summary>

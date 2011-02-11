@@ -350,22 +350,36 @@ namespace EntityOH.Controllers.Connections
         {
 
             string tblPhysicalName = EntityRuntimeHelper.EntityPhysicalName(typeof(Entity));
-            string cTable = "CREATE TABLE [" + tblPhysicalName + "] (\n{0}\n);";
+            string cTable = "CREATE TABLE " + tblPhysicalName + " (\n{0}\n);";
 
             StringBuilder flds = new StringBuilder();
 
 
             foreach (var f in EntityRuntimeHelper.EntityRuntimeFields(typeof(Entity)))
             {
-                flds.Append('[');
+                
                 flds.Append(f.PhysicalName);
-                flds.Append(']');
+                
                 flds.Append(" ");
                 flds.Append(EntityRuntimeHelper.SqlTypeFromCLRType(f.FieldType));
 
                 if (f.Identity) flds.Append(" IDENTITY(1,1)");
                 if (f.Primary) flds.Append(" NOT NULL");
-                else flds.Append(" NULL");
+                else
+                {
+                    if (f.FieldType.IsValueType)
+                    {
+                        //if nullable then set it with null
+                        if (f.FieldType.IsGenericType)
+                            flds.Append(" NULL");
+                        else
+                            flds.Append(" NOT NULL");
+                    }
+                    else
+                    {
+                        flds.Append(" NULL");
+                    }
+                }
 
                 flds.Append(",\n");
 
