@@ -16,8 +16,6 @@ namespace EntityOH.Attributes
         /// The entity physical name in database.
         /// </summary>
         public string PhysicalName { get; set; }
-
-
     }
 
     
@@ -54,8 +52,14 @@ namespace EntityOH.Attributes
         /// Indicates that the property carrying this attribute is only intended to be used in Select statements not in update or insert.
         /// </summary>
         public bool CalculatedExpression { get; set; }
+
+
+
+        /// <summary>
+        /// Indicates that in the select statement this field should be always grouped by.
+        /// </summary>
+        public bool GroupedBy { get; set; }
+
     }
-
-
 
 }

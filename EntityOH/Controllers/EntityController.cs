@@ -80,6 +80,14 @@ namespace EntityOH.Controllers
             }
         }
 
+        public static string GroupByExpression
+        {
+            get
+            {
+                return EntityRuntimeHelper.GroupByExpression(EntityType);
+            }
+        }
+
 
 
         /// <summary>
@@ -143,6 +151,9 @@ namespace EntityOH.Controllers
 
             string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
 
+            if (!string.IsNullOrEmpty(GroupByExpression))
+                SelectAll += " GROUP BY " + GroupByExpression;
+
             List<Entity> ets = new List<Entity>();
 
             using (var reader = _Connection.ExecuteReader(SelectAll))
@@ -169,6 +180,9 @@ namespace EntityOH.Controllers
             string SelectAllStatement = "SELECT DISTINCT {0} FROM {1}";
 
             string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
+
+            if (!string.IsNullOrEmpty(GroupByExpression))
+                SelectAll += " GROUP BY " + GroupByExpression;
 
             List<Entity> ets = new List<Entity>();
 
@@ -205,6 +219,10 @@ namespace EntityOH.Controllers
             string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1}";
             
             string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
+
+            if (!string.IsNullOrEmpty(GroupByExpression))
+                SelectAll += " GROUP BY " + GroupByExpression;
+
 
             string SelectPaged = "SELECT * FROM ({1}) AS PagedQuery WHERE Row_Count BETWEEN {2} and {3}";
 
@@ -246,10 +264,16 @@ namespace EntityOH.Controllers
 
             ExecutePreOperations();
 
-            string SelectAllStatement = "SELECT {0} FROM {1} WHERE {2}";
+            string SelectAllStatement = "SELECT {0} FROM {1}";
 
+            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
+            
+            if (!string.IsNullOrEmpty(GroupByExpression))
+                SelectAll += " GROUP BY " + GroupByExpression;
 
-            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression, whereClause);
+            if (!string.IsNullOrEmpty(whereClause))
+                SelectAll += " WHERE " + whereClause;
+
 
             List<Entity> ets = new List<Entity>();
 
@@ -277,9 +301,16 @@ namespace EntityOH.Controllers
             string pid = EntityRuntime<Entity>.PhysicalName + "." +
                 EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
 
-            string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1} WHERE {2}";
+            string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1}";
 
-            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression, whereClause);
+            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
+
+            if (!string.IsNullOrEmpty(GroupByExpression))
+                SelectAll += " GROUP BY " + GroupByExpression;
+
+            if (!string.IsNullOrEmpty(whereClause))
+                SelectAll += " WHERE " + whereClause;
+
 
             string SelectPaged = "SELECT * FROM ({1}) AS PagedQuery WHERE Row_Count BETWEEN {2} and {3}";
 
@@ -328,7 +359,7 @@ namespace EntityOH.Controllers
         }
 
         /// <summary>
-        /// Get the sum of specific field.
+        /// Get the sum of specific field or zero if return value is null.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -339,7 +370,37 @@ namespace EntityOH.Controllers
             double result = 0;
             using (var SumCommand = _Connection.GetAggregateFunctionCommand<Entity>("SUM", field))
             {
-                result = double.Parse( _Connection.ExecuteScalar(SumCommand).ToString());
+                var reo = _Connection.ExecuteScalar(SumCommand);
+                
+                if (!reo.Equals(DBNull.Value))
+                {
+                    result = double.Parse(reo.ToString());
+                }
+            }
+            return result;
+        }
+
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="field"></param>
+        /// <param name="where"></param>
+        /// <returns></returns>
+        public double Sum(string field, string where)
+        {
+            ExecutePreOperations();
+
+            double result = 0;
+            using (var SumCommand = _Connection.GetAggregateFunctionCommand<Entity>(where, "SUM", field))
+            {
+                var reo = _Connection.ExecuteScalar(SumCommand);
+
+                if (!reo.Equals(DBNull.Value))
+                {
+                    result = double.Parse(reo.ToString());
+                }
             }
             return result;
         }

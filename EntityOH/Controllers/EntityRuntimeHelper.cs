@@ -267,17 +267,48 @@ namespace EntityOH.Controllers
 
             if (type == typeof(string)) return "NVarChar(MAX)";
 
-
             if (type == typeof(double)) return "Float";
             if (type == typeof(Single)) return "Real";
             if (type == typeof(Guid)) return "UniqueIdentifier";
 
-
-
-
             throw new NotImplementedException(type.ToString() + " Type hasn't corresponding sql type");
 
         }
-    
+
+
+        internal static string GroupByExpression(Type entityType)
+        {
+            string GroupedByFields = string.Empty;
+
+            foreach (var f in EntityRuntimeFields(entityType))
+            {
+                if (f.GroupedBy)
+                {
+                    if (f.Foriegn)
+                    {
+                        // if the key is forienger which mean it is another entity
+                        // then all fields on this other enitity should be included in the group by.
+
+                        foreach (var ff in EntityRuntimeFields(f.ForiegnReferenceType))
+                        {
+                            GroupedByFields += "," + EntityPhysicalName(f.ForiegnReferenceType) + "." + ff.PhysicalName;
+                        }
+                    }
+                    else
+                    {
+                        GroupedByFields += "," + EntityPhysicalName(entityType) + "." + f.PhysicalName;
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(GroupedByFields))
+            {
+                return string.Empty;
+            }
+            else
+            {
+                return GroupedByFields.TrimStart(',');
+            }
+        }
     }
 }

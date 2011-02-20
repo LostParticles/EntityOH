@@ -57,6 +57,13 @@ namespace EntityOH.Controllers
         }
 
 
+        /// <summary>
+        /// True when the field should be included in the group by.
+        /// </summary>
+        public bool GroupedBy { get; private set; }
+
+
+
         public PropertyInfo FieldPropertyInfo { get; private set; }
 
         public bool CalculatedExpression { get; set; }
@@ -120,6 +127,7 @@ namespace EntityOH.Controllers
                     Primary = attr.Primary;
                     Identity = attr.Identity;
                     CalculatedExpression = attr.CalculatedExpression;
+                    GroupedBy = attr.GroupedBy;
 
                     // may be there is another primary field that we don't know and the programmer wrote it in the attribute.
                     if (!string.IsNullOrEmpty(attr.ReferencePropertyName))
