@@ -73,6 +73,17 @@ namespace EntityOH.Controllers.Connections
 
         }
 
+
+        public void OpenConnection()
+        {
+            if (_InternalConnection.State == ConnectionState.Closed) _InternalConnection.Open();
+        }
+
+        public void CloseConnection()
+        {
+            _InternalConnection.Close();
+        }
+
         public IDataReader ExecuteReader(string text)
         {
             DbCommand cmd = null;
@@ -85,14 +96,14 @@ namespace EntityOH.Controllers.Connections
                 cmd = new OleDbCommand(text, (OleDbConnection)_InternalConnection);
             }
 
-            if (_InternalConnection.State == ConnectionState.Closed) _InternalConnection.Open();
+            OpenConnection();
 
             return cmd.ExecuteReader(CommandBehavior.CloseConnection);
         }
 
         public IDataReader ExecuteReader(DbCommand command)
         {
-            if (_InternalConnection.State == ConnectionState.Closed) _InternalConnection.Open();
+            OpenConnection();
 
             command.Connection = _InternalConnection;
 
@@ -101,16 +112,17 @@ namespace EntityOH.Controllers.Connections
 
         public object ExecuteScalar(DbCommand command)
         {
-            if (_InternalConnection.State == ConnectionState.Closed) _InternalConnection.Open();
+            OpenConnection();
 
             command.Connection = _InternalConnection;
             object result = command.ExecuteScalar();
 
-            _InternalConnection.Close();
+            CloseConnection();
 
             return result;
         }
 
+        
 
         /// <summary>
         /// Execute the operation without closing the underlieng connection.
@@ -119,7 +131,7 @@ namespace EntityOH.Controllers.Connections
         /// <returns></returns>
         public int ExecuteNonQueryWithoutClose(DbCommand command)
         {
-            if (_InternalConnection.State == ConnectionState.Closed) _InternalConnection.Open();
+            OpenConnection();
 
             command.Connection = _InternalConnection;
 
@@ -131,17 +143,18 @@ namespace EntityOH.Controllers.Connections
 
         public int ExecuteNonQuery(DbCommand command)
         {
-            if (_InternalConnection.State == ConnectionState.Closed) _InternalConnection.Open();
+            OpenConnection();
 
             command.Connection = _InternalConnection;
             
             int returnvalue = command.ExecuteNonQuery();
 
-            _InternalConnection.Close();
+            CloseConnection();
 
             return returnvalue;
         }
 
+        #region Commands Prepators :) looool
 
         /// <summary>
         /// Make insert command of the entity.
@@ -405,7 +418,6 @@ namespace EntityOH.Controllers.Connections
         }
 
 
-
         /// <summary>
         /// Returns command for any select command.
         /// </summary>
@@ -416,6 +428,57 @@ namespace EntityOH.Controllers.Connections
 
             return new SqlCommand(sql);
         }
+
+        #endregion
+
+
+
+        #region Tools
+
+
+        public object ExecuteScalar(string sql)
+        {
+
+            if (this._ConnectionType == SmartConnectionType.OleConnection)
+            {
+                DbCommand cmd = new OleDbCommand(sql);
+                return ExecuteScalar(cmd);
+            }
+            else if (this._ConnectionType == SmartConnectionType.SqlServerConnection)
+            {
+                DbCommand cmd = new SqlCommand(sql);
+                return ExecuteScalar(cmd);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+
+        /// <summary>
+        /// Execute and sql statement against the database provider.
+        /// </summary>
+        /// <param name="sql"></param>
+        public int Execute(string sql)
+        {
+            var cmd = this.GetExecuteCommand(sql);
+
+            return this.ExecuteNonQuery(cmd);
+        }
+
+        /// <summary>
+        /// Reset the identity of the table to the required seed.
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="seed"></param>
+        public void ResetIdentity(string tableName, int seed = 0)
+        {
+            string g = string.Format("DBCC CHECKIDENT ({0}, reseed, {1})", tableName, seed);
+            this.Execute(g);
+        }
+
+        #endregion
 
         #region IDisposable Members
 
