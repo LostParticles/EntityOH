@@ -35,6 +35,14 @@ namespace EntityOH.Controllers
 
         private SmartConnection _Connection;
 
+        public SmartConnection UnderlyingConnection
+        {
+            get
+            {
+                return _Connection;
+            }
+        }
+
         public EntityController()
         {
             _Connection = SmartConnection.GetSmartConnection();
@@ -290,6 +298,45 @@ namespace EntityOH.Controllers
 
             return ets;
         }
+
+
+        /// <summary>
+        /// Select based on where condition.
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <returns></returns>
+        public ICollection<Entity> SelectDistinct(string whereClause)
+        {
+
+            ExecutePreOperations();
+
+            string SelectAllStatement = "SELECT DISTINCT {0} FROM {1}";
+
+            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
+
+            if (!string.IsNullOrEmpty(GroupByExpression))
+                SelectAll += " GROUP BY " + GroupByExpression;
+
+            if (!string.IsNullOrEmpty(whereClause))
+                SelectAll += " WHERE " + whereClause;
+
+
+            List<Entity> ets = new List<Entity>();
+
+            using (var reader = _Connection.ExecuteReader(SelectAll))
+            {
+
+                while (reader.Read())
+                {
+                    ets.Add(EntityRuntime<Entity>.MappingFunction(reader));
+                }
+
+                reader.Close();
+            }
+
+            return ets;
+        }
+
 
 
         public ICollection<Entity> SelectPaged(string whereClause, int pageIndex, int pageItemsCount, out int totalDiscoveredCount)
@@ -601,6 +648,8 @@ namespace EntityOH.Controllers
 
             return ets;
         }
+
+
 
 
         #region IDisposable Members

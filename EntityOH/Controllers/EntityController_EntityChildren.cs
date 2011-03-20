@@ -23,6 +23,7 @@ namespace EntityOH.Controllers
         /// <typeparam name="ChildEntity"></typeparam>
         /// <param name="parentEntity"></param>
         /// <returns></returns>
+        [Obsolete]
         public ICollection<ChildEntity> SelectChildren<ChildEntity>(Entity parentEntity)
         {
             ExecutePreOperations();
@@ -78,6 +79,7 @@ namespace EntityOH.Controllers
         /// </summary>
         /// <param name="fieldsList"></param>
         /// <returns></returns>
+        [Obsolete]
         public ICollection<Entity> SelectPartially(params string[] fields)
         {
             ExecutePreOperations();
