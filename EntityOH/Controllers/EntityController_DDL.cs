@@ -24,10 +24,48 @@ namespace EntityOH.Controllers
         {
             ExecutePreOperations();
 
-            var cmd = _Connection.GetCreateTableCommand<Entity>();
+            var cmd = GetCreateTableCommand();
 
             _Connection.ExecuteNonQuery(cmd);
         }
 
+
+        private static string SqlTypeFromCLRType(Type clrType, bool treatDateTimeAsDate = false)
+        {
+
+            Type type = default(Type);
+
+            if (clrType.IsGenericType && clrType.IsValueType)
+                type = Nullable.GetUnderlyingType(clrType);  //because it is nullable type.
+            else
+                type = clrType;
+
+
+            if (type == typeof(byte)) return "TinyInt";
+            if (type == typeof(short)) return "SmallInt";
+            if (type == typeof(int)) return "Int";
+            if (type == typeof(long)) return "BigInt";
+
+            if (type == typeof(DateTime))
+            {
+                if (treatDateTimeAsDate) return "Date";
+                else return "DateTime";
+            }
+
+            if (type == typeof(string)) return "NVarChar(MAX)";
+
+            if (type == typeof(double)) return "Float";
+            if (type == typeof(Single)) return "Real";
+            if (type == typeof(Guid)) return "UniqueIdentifier";
+
+            throw new NotImplementedException(type.ToString() + " Type hasn't corresponding sql type");
+
+        }
+
+
     }
+
+
+
+
 }

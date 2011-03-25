@@ -31,7 +31,7 @@ namespace EntityOH.Controllers
             string SelectAllStatement = "SELECT {0} FROM {1} WHERE {2}";
 
             string FieldsList=string.Empty;
-            foreach (var fld in EntityRuntimeHelper.FieldsList(typeof(ChildEntity)))
+            foreach (var fld in EntityRuntime<ChildEntity>.FieldsList)
                 FieldsList += fld + ",";
 
             FieldsList = FieldsList.TrimEnd(',');
@@ -45,7 +45,7 @@ namespace EntityOH.Controllers
                 if (fld.Value.ForiegnReferenceType == typeof(Entity))
                 {
                     // found required key.
-                    ForiegnWhereStatement += EntityRuntimeHelper.EntityPhysicalName(typeof(ChildEntity)) + "." + fld.Value.PhysicalName + " = " + EntityRuntime<Entity>.FieldsRuntime[fld.Value.ForiegnReferenceField].FieldReader(parentEntity).ToString();
+                    ForiegnWhereStatement += EntityRuntime<ChildEntity>.PhysicalName + "." + fld.Value.PhysicalName + " = " + EntityRuntime<Entity>.FieldsRuntime[fld.Value.ForiegnReferenceField].FieldReader(parentEntity).ToString();
                     break;
                 }
             }
@@ -55,9 +55,10 @@ namespace EntityOH.Controllers
             // store the child runtime here for 
 
 
-            string SelectAll = string.Format(SelectAllStatement, FieldsList, EntityRuntimeHelper.FromClause(typeof(ChildEntity)), ForiegnWhereStatement);
+            string SelectAll = string.Format(SelectAllStatement, FieldsList, EntityRuntime<ChildEntity>.FromClause, ForiegnWhereStatement);
 
             List<ChildEntity> ets = new List<ChildEntity>();
+
 
             using (var reader = _Connection.ExecuteReader(SelectAll))
             {
@@ -69,6 +70,8 @@ namespace EntityOH.Controllers
 
                 reader.Close();
             }
+
+            _Connection.CloseConnection();
 
             return ets;
         }
@@ -94,6 +97,7 @@ namespace EntityOH.Controllers
 
             List<Entity> ets = new List<Entity>();
 
+
             using (var reader = _Connection.ExecuteReader(SelectAll))
             {
                 SmartReader sr = new SmartReader(reader);
@@ -106,6 +110,7 @@ namespace EntityOH.Controllers
                 reader.Close();
             }
 
+            _Connection.CloseConnection();
             return ets;
         }
        

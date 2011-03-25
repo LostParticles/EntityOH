@@ -76,6 +76,8 @@
   <ItemGroup>
     <Compile Include="Attributes\EntityAttribute.cs" />
     <Compile Include="Controllers\Connections\SmartConnectionType.cs" />
+    <Compile Include="Controllers\ControllerOptions.cs" />
+    <Compile Include="Controllers\EntityController_DbCommands.cs" />
     <Compile Include="Controllers\EntityController_DDL.cs" />
     <Compile Include="Controllers\EntityController_EntityChildren.cs" />
     <Compile Include="Controllers\EntityController.cs" />
