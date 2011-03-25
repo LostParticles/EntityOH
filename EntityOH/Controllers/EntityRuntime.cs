@@ -16,11 +16,33 @@ namespace EntityOH.Controllers
     /// Hold the runtime information of entity.
     /// </summary>
     /// <typeparam name="Entity"></typeparam>
-    internal static class EntityRuntime<Entity>
+    internal  partial class EntityRuntime<Entity>
     {
 
+
+        private string _RunningPhysicalName;
+
         /// <summary>
-        /// Current Entity Database Physical Name
+        /// Current Entity Database Physical Name as was given to the controller while initializing 
+        /// </summary>
+        public string RunningPhysicalName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_RunningPhysicalName))
+                    return EntityRuntimeHelper.EntityPhysicalName(typeof(Entity));
+                else
+                    return _RunningPhysicalName;
+            }
+            set
+            {
+                _RunningPhysicalName = value;
+            }
+        }
+
+
+        /// <summary>
+        /// Physical name of entity just as declared in attribute
         /// </summary>
         public static string PhysicalName
         {
@@ -30,6 +52,131 @@ namespace EntityOH.Controllers
             }
         }
 
+        public static string FromClause
+        {
+            get
+            {
+                var ofrom = PhysicalName;
+
+
+                EntityFieldRuntime pkey = null;
+
+                foreach (var f in EntityRuntimeHelper.EntityRuntimeFields(typeof(Entity)))
+                {
+                    if (f.Primary) pkey = f;
+                    if (f.Foriegn)
+                    {
+                        ofrom += " LEFT JOIN " + EntityRuntimeHelper.EntityPhysicalName(f.ForiegnReferenceType);
+                        ofrom += " ON ";
+                        ofrom += PhysicalName + "." + f.PhysicalName;
+                        ofrom += " = ";
+                        ofrom += EntityRuntimeHelper.EntityPhysicalName(f.ForiegnReferenceType) + "." + f.ForiegnReferenceField;
+                    }
+                }
+
+                if (pkey != null)
+                {
+                    Type bt;
+                    if (EntityRuntimeHelper.IsEntityInherited(typeof(Entity), out bt))
+                    {
+                        string bname = EntityRuntimeHelper.EntityPhysicalName(bt); //how to know the field name that is one to one with the parent table.
+
+                        // assuming the same name.
+
+                        ofrom += " INNER JOIN " + bname + " ON " + PhysicalName + "." +
+                            pkey.PhysicalName + " = " + EntityRuntimeHelper.EntityPhysicalName(bt) + "." + pkey.PhysicalName;
+                    }
+                }
+                return ofrom;
+
+            }
+        }
+
+
+        public string RunningFromClause
+        {
+            get
+            {
+                var ofrom = this.RunningPhysicalName;
+
+
+                EntityFieldRuntime pkey = null;
+
+                foreach (var f in EntityRuntimeHelper.EntityRuntimeFields(typeof(Entity)))
+                {
+                    if (f.Primary) pkey = f;
+                    if (f.Foriegn)
+                    {
+                        ofrom += " LEFT JOIN " + EntityRuntimeHelper.EntityPhysicalName(f.ForiegnReferenceType);
+                        ofrom += " ON ";
+                        ofrom += RunningPhysicalName + "." + f.PhysicalName;
+                        ofrom += " = ";
+                        ofrom += EntityRuntimeHelper.EntityPhysicalName(f.ForiegnReferenceType) + "." + f.ForiegnReferenceField;
+                    }
+                }
+
+                if (pkey != null)
+                {
+                    Type bt;
+                    if (EntityRuntimeHelper.IsEntityInherited(typeof(Entity), out bt))
+                    {
+                        string bname = EntityRuntimeHelper.EntityPhysicalName(bt); //how to know the field name that is one to one with the parent table.
+
+                        // assuming the same name.
+
+                        ofrom += " INNER JOIN " + bname + " ON " + RunningPhysicalName + "." +
+                            pkey.PhysicalName + " = " + EntityRuntimeHelper.EntityPhysicalName(bt) + "." + pkey.PhysicalName;
+                    }
+                }
+                return ofrom;
+
+            }
+        }
+
+        public static IEnumerable<EntityFieldRuntime> EntityRuntimeFields
+        {
+            get
+            {
+
+                return EntityRuntimeHelper.EntityRuntimeFields(typeof(Entity));
+            }
+        }
+
+        public IEnumerable<string> RunningFieldsList
+        {
+            get
+            {
+                return EntityRuntimeHelper.FieldsList(typeof(Entity), RunningPhysicalName);
+            }
+        }
+
+        public static IEnumerable<string> FieldsList
+        {
+            get
+            {
+                return EntityRuntimeHelper.FieldsList(typeof(Entity));
+            }
+        }
+        public string RunningGroupByExpression
+        {
+
+            get
+            {
+                return EntityRuntimeHelper.GroupByExpression(typeof(Entity), RunningPhysicalName);
+            }
+        }
+
+
+        public static string GroupByExpression
+        {
+
+            get
+            {
+                return EntityRuntimeHelper.GroupByExpression(typeof(Entity));
+            }
+        }
+
+        
         public static Type BaseEntityType;
 
 
@@ -59,7 +206,7 @@ namespace EntityOH.Controllers
 
             // add suitable properties into the fields runtime
 
-            foreach (var pp in EntityRuntimeHelper.EntityProperties(EntityType))
+            foreach (var pp in EntityFieldRuntime.EntityProperties(EntityType))
             {
                 FieldsRuntime.Add(pp.Name, new EntityFieldRuntime(pp));
             }

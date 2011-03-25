@@ -22,6 +22,10 @@ namespace EntityOH.Controllers
     public partial class EntityController<Entity> : IDisposable
     {
 
+
+        private EntityRuntime<Entity> EntityRuntime = new EntityRuntime<Entity>();
+
+
         /// <summary>
         /// Current Entity Type
         /// </summary>
@@ -54,15 +58,31 @@ namespace EntityOH.Controllers
         }
 
 
+        /// <summary>
+        /// Controller constructor for extra options in initating controller.
+        /// </summary>
+        /// <param name="options"></param>
+        public EntityController(COptions options)
+        {
+            if (!string.IsNullOrEmpty(options.ConnectionKey))
+                _Connection = SmartConnection.GetSmartConnection(options.ConnectionKey);
+            else
+                _Connection = SmartConnection.GetSmartConnection();
+
+
+            EntityRuntime.RunningPhysicalName = options.TableName;
+
+        }
+
         private static string _FieldsList = string.Empty;
-        public static string FieldsList
+        public string FieldsList
         {
             get
             {
                 if (string.IsNullOrEmpty(_FieldsList))
                 {
                     StringBuilder sb = new StringBuilder();
-                    var fls = EntityRuntimeHelper.FieldsList(EntityType);
+                    var fls = EntityRuntime.RunningFieldsList;
 
                     foreach (var fl in fls)
                     {
@@ -80,19 +100,19 @@ namespace EntityOH.Controllers
         /// <summary>
         /// Form the from clause with any required joins
         /// </summary>
-        public static string FromExpression
+        public string FromExpression
         {
             get
             {
-                return EntityRuntimeHelper.FromClause(EntityType);
+                return EntityRuntime.RunningFromClause;
             }
         }
 
-        public static string GroupByExpression
+        public string GroupByExpression
         {
             get
             {
-                return EntityRuntimeHelper.GroupByExpression(EntityType);
+                return EntityRuntime.RunningGroupByExpression;
             }
         }
 
@@ -128,6 +148,8 @@ namespace EntityOH.Controllers
 
         private void ExecutePreOperations()
         {
+            _Connection.OpenConnection();
+
             foreach (var op in StaticPreOperationsStatements)
             {
                 var cmd = _Connection.GetExecuteCommand(op);
@@ -164,13 +186,21 @@ namespace EntityOH.Controllers
 
             List<Entity> ets = new List<Entity>();
 
-            using (var reader = _Connection.ExecuteReader(SelectAll))
+
+            try
             {
-                while (reader.Read())
+                using (var reader = _Connection.ExecuteReader(SelectAll))
                 {
-                    ets.Add(EntityRuntime<Entity>.MappingFunction(reader));
+                    while (reader.Read())
+                    {
+                        ets.Add(EntityRuntime<Entity>.MappingFunction(reader));
+                    }
+                    reader.Close();
                 }
-                reader.Close();
+            }
+            finally
+            {
+                _Connection.CloseConnection();
             }
 
             return ets;
@@ -194,6 +224,7 @@ namespace EntityOH.Controllers
 
             List<Entity> ets = new List<Entity>();
 
+
             using (var reader = _Connection.ExecuteReader(SelectAll))
             {
                 while (reader.Read())
@@ -203,6 +234,7 @@ namespace EntityOH.Controllers
                 reader.Close();
             }
 
+            _Connection.CloseConnection();
             return ets;
         }
 
@@ -221,7 +253,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
 
-            string pid = EntityRuntime<Entity>.PhysicalName + "." +
+            string pid = EntityRuntime.RunningPhysicalName + "." +
                 EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
 
             string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1}";
@@ -243,7 +275,7 @@ namespace EntityOH.Controllers
 
             string FinalSelect = string.Format(SelectPaged, FieldsList, SelectAll, fromRow, toRow);
 
-            totalDiscoveredCount = (int)_Connection.ExecuteScalar(_Connection.GetCountCommand<Entity>());
+            totalDiscoveredCount = (int)_Connection.ExecuteScalar(GetCountCommand());
 
             List<Entity> ets = new List<Entity>();
 
@@ -255,6 +287,7 @@ namespace EntityOH.Controllers
                 }
                 reader.Close();
             }
+            _Connection.CloseConnection();
 
             return ets;
 
@@ -285,6 +318,7 @@ namespace EntityOH.Controllers
 
             List<Entity> ets = new List<Entity>();
 
+
             using (var reader = _Connection.ExecuteReader(SelectAll))
             {
 
@@ -296,6 +330,7 @@ namespace EntityOH.Controllers
                 reader.Close();
             }
 
+            _Connection.CloseConnection();
             return ets;
         }
 
@@ -333,7 +368,7 @@ namespace EntityOH.Controllers
 
                 reader.Close();
             }
-
+            _Connection.CloseConnection();
             return ets;
         }
 
@@ -345,7 +380,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
 
-            string pid = EntityRuntime<Entity>.PhysicalName + "." +
+            string pid = EntityRuntime.RunningPhysicalName + "." +
                 EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
 
             string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1}";
@@ -370,7 +405,7 @@ namespace EntityOH.Controllers
 
             string FinalSelect = string.Format(SelectPaged, FieldsList, SelectAll, fromRow, toRow);
 
-            totalDiscoveredCount = (int)_Connection.ExecuteScalar(_Connection.GetCountCommand<Entity>(whereClause));
+            totalDiscoveredCount = (int)_Connection.ExecuteScalar(GetCountCommand(whereClause));
 
             List<Entity> ets = new List<Entity>();
 
@@ -382,6 +417,8 @@ namespace EntityOH.Controllers
                 }
                 reader.Close();
             }
+
+            _Connection.CloseConnection();
 
             return ets;
 
@@ -398,7 +435,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
             long result = 0;
-            using (var CountCommand = _Connection.GetCountCommand<Entity>())
+            using (var CountCommand = GetCountCommand())
             {
                  result = long.Parse(_Connection.ExecuteScalar(CountCommand).ToString());
             }
@@ -415,7 +452,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
             double result = 0;
-            using (var SumCommand = _Connection.GetAggregateFunctionCommand<Entity>("SUM", field))
+            using (var SumCommand = GetAggregateFunctionCommand("SUM", field))
             {
                 var reo = _Connection.ExecuteScalar(SumCommand);
                 
@@ -440,7 +477,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
             double result = 0;
-            using (var SumCommand = _Connection.GetAggregateFunctionCommand<Entity>(where, "SUM", field))
+            using (var SumCommand = GetAggregateFunctionCommand(where, "SUM", field))
             {
                 var reo = _Connection.ExecuteScalar(SumCommand);
 
@@ -464,13 +501,13 @@ namespace EntityOH.Controllers
 
             EntityFieldRuntime IdentityFieldRuntime;
 
-            using (DbCommand command = _Connection.GetInsertCommand<Entity>(out IdentityFieldRuntime))
+            using (DbCommand command = GetInsertCommand(out IdentityFieldRuntime))
             {
                 foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
                 {
                     if (!f.Value.Identity)
                     {
-                        command.Parameters.Add(_Connection.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                        command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                     }
                 }
 
@@ -507,7 +544,7 @@ namespace EntityOH.Controllers
 
             EntityFieldRuntime IdentityFieldRuntime;
 
-            using (DbCommand command = _Connection.GetInsertCommand<Entity>(out IdentityFieldRuntime))
+            using (DbCommand command = GetInsertCommand(out IdentityFieldRuntime))
             {
                 int ie = 0;
                 foreach (var entity in entities)
@@ -517,11 +554,11 @@ namespace EntityOH.Controllers
                         if (!f.Value.Identity)
                         {
                             if (ie == 0)
-                                command.Parameters.Add(_Connection.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                                command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                             else
                             {
                                 // already declared
-                                command.Parameters[_Connection.GetValidParameterName(f.Value.PhysicalName)].Value = f.Value.FieldReader(entity);
+                                command.Parameters[GetValidParameterName(f.Value.PhysicalName)].Value = f.Value.FieldReader(entity);
                             }
                         }
                     }
@@ -544,13 +581,13 @@ namespace EntityOH.Controllers
         {
             ExecutePreOperations();
 
-            using (DbCommand command = _Connection.GetSelectCommand<Entity>())
+            using (DbCommand command = GetSelectCommand())
             {
                 foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
                 {
                     if (f.Value.Primary)
                     {
-                        command.Parameters.Add(_Connection.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                        command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                     }
                 }
 
@@ -563,6 +600,8 @@ namespace EntityOH.Controllers
                     reader.Close();
                 }
             }
+
+            _Connection.CloseConnection();
         }
 
 
@@ -574,13 +613,13 @@ namespace EntityOH.Controllers
         {
             ExecutePreOperations();
 
-            using (DbCommand command = _Connection.GetDeleteCommand<Entity>())
+            using (DbCommand command = GetDeleteCommand())
             {
                 foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
                 {
                     if (f.Value.Primary)
                     {
-                        command.Parameters.Add(_Connection.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                        command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                     }
                 }
 
@@ -595,12 +634,12 @@ namespace EntityOH.Controllers
         {
             ExecutePreOperations();
 
-            using (DbCommand command = _Connection.GetUpdateCommand<Entity>())
+            using (DbCommand command = GetUpdateCommand())
             {
 
                 foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
                 {
-                    command.Parameters.Add(_Connection.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                    command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                 }
 
                 _Connection.ExecuteNonQuery(command);
@@ -630,11 +669,12 @@ namespace EntityOH.Controllers
         /// <returns></returns>
         public ICollection<Entity> ExecuteProcedure(string procName)
         {
+
             ExecutePreOperations();
 
             List<Entity> ets = new List<Entity>();
 
-            using (var command = _Connection.GetStoredProcedureCommand<Entity>(procName))
+            using (var command = GetStoredProcedureCommand(procName))
             {
                 using (var reader = _Connection.ExecuteReader(command))
                 {
@@ -645,6 +685,8 @@ namespace EntityOH.Controllers
                     reader.Close();
                 }
             }
+
+            _Connection.CloseConnection();
 
             return ets;
         }
