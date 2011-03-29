@@ -52,9 +52,15 @@ namespace EntityOH.Controllers
             _Connection = SmartConnection.GetSmartConnection();
         }
 
+
         public EntityController(string connectionKey)
         {
             _Connection = SmartConnection.GetSmartConnection(connectionKey);
+        }
+
+        internal EntityController(SmartConnection sm)
+        {
+            _Connection = sm;
         }
 
 
