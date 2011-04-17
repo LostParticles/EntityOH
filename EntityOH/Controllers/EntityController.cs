@@ -10,6 +10,7 @@ using EntityOH.Attributes;
 using EntityOH.Controllers.Connections;
 
 using System.Data.Common;
+using System.Diagnostics;
 
 
 namespace EntityOH.Controllers
@@ -190,9 +191,10 @@ namespace EntityOH.Controllers
             if (!string.IsNullOrEmpty(GroupByExpression))
                 SelectAll += " GROUP BY " + GroupByExpression;
 
+
+            _LastSqlStatement = SelectAll;
+
             List<Entity> ets = new List<Entity>();
-
-
             try
             {
                 using (var reader = _Connection.ExecuteReader(SelectAll))
@@ -228,6 +230,8 @@ namespace EntityOH.Controllers
             if (!string.IsNullOrEmpty(GroupByExpression))
                 SelectAll += " GROUP BY " + GroupByExpression;
 
+
+            _LastSqlStatement = SelectAll;
             List<Entity> ets = new List<Entity>();
 
 
@@ -239,7 +243,7 @@ namespace EntityOH.Controllers
                 }
                 reader.Close();
             }
-
+            
             _Connection.CloseConnection();
             return ets;
         }
@@ -283,8 +287,8 @@ namespace EntityOH.Controllers
 
             totalDiscoveredCount = (int)_Connection.ExecuteScalar(GetCountCommand());
 
+            _LastSqlStatement = FinalSelect;
             List<Entity> ets = new List<Entity>();
-
             using (var reader = _Connection.ExecuteReader(FinalSelect))
             {
                 while (reader.Read())
@@ -322,6 +326,7 @@ namespace EntityOH.Controllers
                 SelectAll += " WHERE " + whereClause;
 
 
+            _LastSqlStatement = SelectAll;
             List<Entity> ets = new List<Entity>();
 
 
@@ -335,6 +340,7 @@ namespace EntityOH.Controllers
 
                 reader.Close();
             }
+            
 
             _Connection.CloseConnection();
             return ets;
@@ -362,8 +368,9 @@ namespace EntityOH.Controllers
                 SelectAll += " WHERE " + whereClause;
 
 
-            List<Entity> ets = new List<Entity>();
+            _LastSqlStatement = SelectAll;
 
+            List<Entity> ets = new List<Entity>();
             using (var reader = _Connection.ExecuteReader(SelectAll))
             {
 
@@ -374,6 +381,8 @@ namespace EntityOH.Controllers
 
                 reader.Close();
             }
+
+            
             _Connection.CloseConnection();
             return ets;
         }
@@ -413,6 +422,8 @@ namespace EntityOH.Controllers
 
             totalDiscoveredCount = (int)_Connection.ExecuteScalar(GetCountCommand(whereClause));
 
+            _LastSqlStatement = FinalSelect;
+
             List<Entity> ets = new List<Entity>();
 
             using (var reader = _Connection.ExecuteReader(FinalSelect))
@@ -423,6 +434,8 @@ namespace EntityOH.Controllers
                 }
                 reader.Close();
             }
+
+            
 
             _Connection.CloseConnection();
 
@@ -443,7 +456,9 @@ namespace EntityOH.Controllers
             long result = 0;
             using (var CountCommand = GetCountCommand())
             {
+                _LastSqlStatement = CountCommand.CommandText;
                  result = long.Parse(_Connection.ExecuteScalar(CountCommand).ToString());
+                 
             }
             return result;
         }
@@ -460,6 +475,7 @@ namespace EntityOH.Controllers
             double result = 0;
             using (var SumCommand = GetAggregateFunctionCommand("SUM", field))
             {
+                _LastSqlStatement = SumCommand.CommandText;
                 var reo = _Connection.ExecuteScalar(SumCommand);
                 
                 if (!reo.Equals(DBNull.Value))
@@ -485,6 +501,7 @@ namespace EntityOH.Controllers
             double result = 0;
             using (var SumCommand = GetAggregateFunctionCommand(where, "SUM", field))
             {
+                _LastSqlStatement = SumCommand.CommandText;
                 var reo = _Connection.ExecuteScalar(SumCommand);
 
                 if (!reo.Equals(DBNull.Value))
@@ -507,8 +524,11 @@ namespace EntityOH.Controllers
 
             EntityFieldRuntime IdentityFieldRuntime;
 
+
             using (DbCommand command = GetInsertCommand(out IdentityFieldRuntime))
             {
+                _LastSqlStatement = command.CommandText;
+
                 foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
                 {
                     if (!f.Value.Identity)
@@ -535,10 +555,22 @@ namespace EntityOH.Controllers
                     _Connection.ExecuteNonQuery(command);
                 }
             }
-
         }
 
 
+
+        private string _LastSqlStatement;
+
+        /// <summary>
+        /// Display last sql statement executed in the controller.
+        /// </summary>
+        public string LastSqlStatement
+        {
+            get
+            {
+                return _LastSqlStatement;
+            }
+        }
 
         /// <summary>
         /// Insert bulk of entities {optimitzed for fast execution)
@@ -552,6 +584,8 @@ namespace EntityOH.Controllers
 
             using (DbCommand command = GetInsertCommand(out IdentityFieldRuntime))
             {
+                _LastSqlStatement = command.CommandText;
+
                 int ie = 0;
                 foreach (var entity in entities)
                 {
@@ -568,11 +602,13 @@ namespace EntityOH.Controllers
                             }
                         }
                     }
-
+                    
                     _Connection.ExecuteNonQuery(command);
 
                     ie++;
                 }
+
+                
             }
 
         }
@@ -580,10 +616,9 @@ namespace EntityOH.Controllers
 
         /// <summary>
         /// Select the entity based on its primary ids
-        /// Needs re-written to not create the whole object again.
         /// </summary>
         /// <param name="entity"></param>
-        public void SelectEntity(ref Entity entity)
+        public void Select(ref Entity entity)
         {
             ExecutePreOperations();
 
@@ -597,6 +632,7 @@ namespace EntityOH.Controllers
                     }
                 }
 
+                _LastSqlStatement = command.CommandText;
                 using (var reader = _Connection.ExecuteReader(command))
                 {
                     reader.Read();
@@ -605,6 +641,8 @@ namespace EntityOH.Controllers
 
                     reader.Close();
                 }
+
+                
             }
 
             _Connection.CloseConnection();
@@ -615,7 +653,7 @@ namespace EntityOH.Controllers
         /// Delete the entity based on data
         /// </summary>
         /// <param name="entity"></param>
-        public void DeleteEntity(Entity entity)
+        public void Delete(Entity entity)
         {
             ExecutePreOperations();
 
@@ -628,9 +666,11 @@ namespace EntityOH.Controllers
                         command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                     }
                 }
-
+                _LastSqlStatement = command.CommandText;
                 _Connection.ExecuteNonQuery(command);
             }
+
+            _Connection.CloseConnection();
             
         }
 
@@ -650,6 +690,7 @@ namespace EntityOH.Controllers
 
                 _Connection.ExecuteNonQuery(command);
             }
+            _Connection.CloseConnection();
         }
 
 

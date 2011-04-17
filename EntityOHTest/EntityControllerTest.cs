@@ -66,14 +66,7 @@ namespace EntityOHTest
         //
         #endregion
 
-        [TestMethod]
-        public void CreatePersonTableTest()
-        {
-            using (var pc = new EntityController<Entities.Person>())
-            {
-                //pc.CreateTable();
-            }
-        }
+        
 
         [TestMethod()]
         public void SelectTest()
@@ -81,7 +74,12 @@ namespace EntityOHTest
             using (var pc = new EntityController<Entities.Person>())
             {
 
-                var all = pc.Select().ToArray();
+                var all = pc.Select();
+
+
+                foreach (var r in all) r.Name = "";
+                pc.Insert(all);
+
                 
             }
             
