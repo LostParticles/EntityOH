@@ -16,6 +16,12 @@ namespace EntityOH
     public class DbProbe
     {
 
+
+        /// <summary>
+        /// Shows the last sql statement done on the database.
+        /// </summary>
+        public string LastSqlStatement { get; private set; }
+
         private readonly SmartConnection _UnderlyingConnection;
         private DbProbe(SmartConnection sm)
         {
@@ -43,10 +49,9 @@ namespace EntityOH
         }
 
         
-
-        
         /// <summary>
-        /// 
+        /// Returns data table based on the table/view you enter in the indexer and a condition that 
+        /// can be added between brackets Person{ID 4}
         /// </summary>
         /// <param name="name">Name of table/view    i.e.  Person  or  Person{ID=3}</param>
         /// <returns></returns>
@@ -77,6 +82,9 @@ namespace EntityOH
 
                 _UnderlyingConnection.OpenConnection();
 
+
+
+                LastSqlStatement = sql;
 
                 DataTable data = new DataTable();
 
@@ -120,31 +128,98 @@ namespace EntityOH
         /// </summary>
         /// <typeparam name="Entity"></typeparam>
         /// <returns></returns>
-        public ICollection<Entity> Select<Entity>()
+        public ICollection<Entity> Select<Entity>(string where="")
         {
-            ICollection<Entity> all;
+            ICollection<Entity> all = null;
 
             using (var ee = new EntityController<Entity>(_UnderlyingConnection))
             {
-                all = ee.Select();
+                try
+                {
+                    if (string.IsNullOrEmpty(where))
+                        all = ee.Select();
+                    else
+                        all = ee.Select(where);
+                }
+                finally
+                {
+                    LastSqlStatement = ee.LastSqlStatement;
+                }
             }
 
             return all;
-
         }
 
 
-        public ICollection<Entity> Select<Entity>(string where)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="Entity"></typeparam>
+        /// <param name="where"></param>
+        /// <returns></returns>
+        public ICollection<Entity> SelectDistinct<Entity>(string where = "")
         {
-            ICollection<Entity> all;
+            ICollection<Entity> all = null;
 
             using (var ee = new EntityController<Entity>(_UnderlyingConnection))
             {
-                all = ee.Select(where);
+                try
+                {
+                    if (string.IsNullOrEmpty(where))
+                        all = ee.SelectDistinct();
+                    else
+                        all = ee.SelectDistinct(where);
+                }
+                finally
+                {
+                    LastSqlStatement = ee.LastSqlStatement;
+                }
             }
 
             return all;
+        }
 
+
+
+        /// <summary>
+        /// Insert the entity into its corresponding table.
+        /// </summary>
+        /// <typeparam name="Entity"></typeparam>
+        /// <param name="entity"></param>
+        public void Insert<Entity>(Entity entity)
+        {
+            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            {
+                try
+                {
+                    ee.Insert(entity);
+                }
+                finally
+                {
+                    LastSqlStatement = ee.LastSqlStatement;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Updates the entity in the database.
+        /// </summary>
+        /// <typeparam name="Entity"></typeparam>
+        /// <param name="entity"></param>
+        public void Update<Entity>(Entity entity)
+        {
+            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            {
+                try
+                {
+                    ee.Update(entity);
+                }
+                finally
+                {
+                    LastSqlStatement = ee.LastSqlStatement;
+                }
+            }
         }
 
     }

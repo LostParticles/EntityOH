@@ -26,6 +26,7 @@ namespace EntityOH.Controllers
 
             var cmd = GetCreateTableCommand();
 
+            _LastSqlStatement = cmd.CommandText;
             _Connection.ExecuteNonQuery(cmd);
         }
 

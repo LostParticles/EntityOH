@@ -177,8 +177,11 @@ namespace EntityOH.Controllers
                         if (f.Foriegn)
                         {
                             // if the key is forienger which mean it is another entity
-                            // then all fields on this other enitity should be included in the group by.
+                            
+                            //add the field itself in group by 
+                            GroupedByFields += "," + physicalTableName + "." + f.PhysicalName;
 
+                            // then all fields on this other enitity should be included in the group by.
                             foreach (var ff in EntityRuntimeFields(f.ForiegnReferenceType))
                             {
                                 GroupedByFields += "," + EntityPhysicalName(f.ForiegnReferenceType) + "." + ff.PhysicalName;

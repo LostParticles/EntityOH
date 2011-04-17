@@ -193,14 +193,14 @@ namespace EntityOH.Controllers
         /// </summary>
         public static Func<IDataReader, Entity> MappingFunction { get; private set; }
 
-
         public static LambdaExpression PartialMappingExpression { get; private set; }
         public static Func<SmartReader, Entity> PartialMappingFunction { get; private set; }
 
         public static Dictionary<string, EntityFieldRuntime> FieldsRuntime = new Dictionary<string, EntityFieldRuntime>(StringComparer.OrdinalIgnoreCase);
 
-        
-        static EntityRuntime()
+
+
+        static void ConstructTheMappingFunction()
         {
             Type EntityType = typeof(Entity);
 
@@ -234,7 +234,7 @@ namespace EntityOH.Controllers
             {
                 //  int IDataReader.GetOrdinal(string pp.Name)
                 var ReaderOrdinal = Expression.Call(RecordParameterExpression, GetOrdinalInfo, Expression.Constant(EntityType.Name + EntityRuntimeHelper.AliasSeparator + fr.Value.FieldPropertyInfo.Name)); //selecting inside reader with the property name because we are renaming the return columns with the names of the entity properties.
-                
+
                 // object IDataReader.GetObject(int ordinal )
                 var RecordValue = Expression.Call(RecordParameterExpression, GetValueInfo, ReaderOrdinal);
 
@@ -264,12 +264,12 @@ namespace EntityOH.Controllers
                             RefBindings.Add(Refbinding);
                         }
                     }
-                    
-                    
+
+
                     var IsValueNull = Expression.Call(RecordParameterExpression, IsDBNullInfo, ReaderOrdinal);
 
                     var RefInitializer = Expression.MemberInit(NewRefEntity, RefBindings.ToArray());  //the reference type initialized here
-                    
+
                     // binding here should depend if there is value in reader or not.
                     var Ref = Expression.Condition(IsValueNull, Expression.Constant(null, fr.Value.FieldType), RefInitializer);
 
@@ -299,10 +299,26 @@ namespace EntityOH.Controllers
                         var binding = Expression.Bind(fr.Value.FieldPropertyInfo, ToBeOrNotToBe);
 
                         bindings.Add(binding);
-                        
+
+                    }
+                    else if (fr.Value.FieldType.IsClass)
+                    {
+                        // normal class maybe string 
+                        var IsValueNull = Expression.Call(RecordParameterExpression, IsDBNullInfo, ReaderOrdinal);
+
+                        var Value = Expression.Convert(RecordValue, fr.Value.FieldType);
+
+                        var ToBeOrNotToBe = fr.Value.FieldType == typeof(string) ? Expression.Condition(IsValueNull, Expression.Constant(string.Empty, typeof(string)), Value) : Expression.Condition(IsValueNull, Expression.Constant(null, fr.Value.FieldType), Value);
+
+                        // bind this value to the initial assigning list.
+                        var binding = Expression.Bind(fr.Value.FieldPropertyInfo, ToBeOrNotToBe);
+
+                        bindings.Add(binding);
                     }
                     else
                     {
+                        // this is a normal value type.
+
                         // and then convert the value to the target type
                         var Value = Expression.Convert(RecordValue, fr.Value.FieldType);
 
@@ -328,6 +344,7 @@ namespace EntityOH.Controllers
 
 
 
+
             #region Partial Mapping Function
             // Prepare Mapping Expression
 
@@ -340,8 +357,8 @@ namespace EntityOH.Controllers
             // search for every field in DataRecord and return its value in initializer then compile all of this.
             foreach (var fr in FieldsRuntime)
             {
-                var FieldValueMethod = SmartReaderType.GetMethod("GetFieldValue").MakeGenericMethod(fr.Value.FieldType);                
-                
+                var FieldValueMethod = SmartReaderType.GetMethod("GetFieldValue").MakeGenericMethod(fr.Value.FieldType);
+
                 var ReaderValue = Expression.Call(RecordParameterExpression, FieldValueMethod, Expression.Constant(fr.Value.PhysicalName));
 
                 var Value = Expression.Convert(ReaderValue, fr.Value.FieldType);
@@ -359,6 +376,12 @@ namespace EntityOH.Controllers
 
             #endregion
             
+
+        }
+        
+        static EntityRuntime()
+        {
+            ConstructTheMappingFunction();
         }
 
     }
