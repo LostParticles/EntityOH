@@ -222,6 +222,18 @@ namespace EntityOH
             }
         }
 
+
+
+        /// <summary>
+        /// Execute sql statement against database provider.
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <returns></returns>
+        public int Execute(string sql)
+        {
+            return _UnderlyingConnection.Execute(sql);
+        }
+
     }
 
 
