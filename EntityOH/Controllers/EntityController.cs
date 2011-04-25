@@ -81,7 +81,7 @@ namespace EntityOH.Controllers
 
         }
 
-        private static string _FieldsList = string.Empty;
+        private string _FieldsList = string.Empty;
         public string FieldsList
         {
             get
