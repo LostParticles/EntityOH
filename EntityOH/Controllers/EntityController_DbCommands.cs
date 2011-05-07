@@ -78,7 +78,10 @@ namespace EntityOH.Controllers
 
         internal DbParameter GetParameter(string parameterName, object value)
         {
-            SqlParameter sp = new SqlParameter(GetValidParameterName(parameterName), value);
+            object val = value;
+            if (val == null) val = DBNull.Value;
+            
+            SqlParameter sp = new SqlParameter(GetValidParameterName(parameterName), val);
             return sp;
         }
 
