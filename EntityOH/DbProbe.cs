@@ -51,7 +51,7 @@ namespace EntityOH
         
         /// <summary>
         /// Returns data table based on the table/view you enter in the indexer and a condition that 
-        /// can be added between brackets Person{ID 4}
+        /// can be added between brackets Person{ID = 4}
         /// </summary>
         /// <param name="name">Name of table/view    i.e.  Person  or  Person{ID=3}</param>
         /// <returns></returns>
@@ -232,6 +232,53 @@ namespace EntityOH
         public int Execute(string sql)
         {
             return _UnderlyingConnection.Execute(sql);
+        }
+
+
+
+        /// <summary>
+        /// Execute free sql statement and return the result in data table object.
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <returns></returns>
+        public DataTable ExecuteDataTable(string sql)
+        {
+
+            LastSqlStatement = sql;
+
+            _UnderlyingConnection.OpenConnection();
+
+            DataTable data = new DataTable();
+
+            try
+            {
+                using (var reader = _UnderlyingConnection.ExecuteReader(sql))
+                {
+                    // add fields names
+                    for (int ix = 0; ix < reader.FieldCount; ix++)
+                    {
+                        data.Columns.Add(reader.GetName(ix), reader.GetFieldType(ix));
+                    }
+
+                    while (reader.Read())
+                    {
+                        var row = data.NewRow();
+                        for (int ix = 0; ix < reader.FieldCount; ix++)
+                        {
+                            row[ix] = reader.GetValue(ix);
+                        }
+
+                        data.Rows.Add(row);
+                    }
+                    reader.Close();
+                }
+            }
+            finally
+            {
+                _UnderlyingConnection.CloseConnection();
+            }
+
+            return data;
         }
 
     }
