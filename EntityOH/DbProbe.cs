@@ -281,6 +281,39 @@ namespace EntityOH
             return data;
         }
 
+
+        /// <summary>
+        /// Execute the sql and return array of the type.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="sql"></param>
+        /// <returns></returns>
+        public ICollection<T> ExecuteArray<T>(string sql)
+        {
+            LastSqlStatement = sql;
+
+            _UnderlyingConnection.OpenConnection();
+
+            List<T> data = new List<T>();
+
+            try
+            {
+                using (var reader = _UnderlyingConnection.ExecuteReader(sql))
+                {
+                    while (reader.Read())
+                    {
+                        data.Add((T)reader.GetValue(0));
+                    }
+                    reader.Close();
+                }
+            }
+            finally
+            {
+                _UnderlyingConnection.CloseConnection();
+            }
+
+            return data;
+        }
     }
 
 
