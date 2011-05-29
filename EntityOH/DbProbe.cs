@@ -283,6 +283,33 @@ namespace EntityOH
 
 
         /// <summary>
+        /// Execute the sql statement and retuen scalar value of the type parameter.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="sql"></param>
+        /// <returns></returns>
+        public T ExecuteScalar<T>(string sql)
+        {
+                        LastSqlStatement = sql;
+
+            _UnderlyingConnection.OpenConnection();
+
+            T data = default(T);
+
+            try
+            {
+                 data  = (T)_UnderlyingConnection.ExecuteScalar(sql);
+            }
+            finally
+            {
+                _UnderlyingConnection.CloseConnection();
+            }
+
+            return data;
+        }
+
+
+        /// <summary>
         /// Execute the sql and return array of the type.
         /// </summary>
         /// <typeparam name="T"></typeparam>
