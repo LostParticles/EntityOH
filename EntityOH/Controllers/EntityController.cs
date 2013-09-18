@@ -348,6 +348,52 @@ namespace EntityOH.Controllers
 
 
         /// <summary>
+        /// Select based on where condition and order by 
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <param name="orderByClause"></param>
+        /// <returns></returns>
+        public ICollection<Entity> SelectWithOrder(string whereClause, string orderByClause)
+        {
+
+            ExecutePreOperations();
+
+            string SelectAllStatement = "SELECT {0} FROM {1}";
+
+            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
+
+            if (!string.IsNullOrEmpty(GroupByExpression))
+                SelectAll += " GROUP BY " + GroupByExpression;
+
+            if (!string.IsNullOrEmpty(whereClause))
+                SelectAll += " WHERE " + whereClause;
+
+            if(!string.IsNullOrEmpty(orderByClause))
+                SelectAll += " ORDER BY " + orderByClause;
+
+
+            _LastSqlStatement = SelectAll;
+            List<Entity> ets = new List<Entity>();
+
+
+            using (var reader = _Connection.ExecuteReader(SelectAll))
+            {
+
+                while (reader.Read())
+                {
+                    ets.Add(EntityRuntime<Entity>.MappingFunction(reader));
+                }
+
+                reader.Close();
+            }
+
+
+            _Connection.CloseConnection();
+            return ets;
+        }
+
+
+        /// <summary>
         /// Select based on where condition.
         /// </summary>
         /// <param name="whereClause"></param>
