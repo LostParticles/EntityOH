@@ -151,6 +151,26 @@ namespace EntityOH
         }
 
 
+        public ICollection<Entity> SelectWithOrder<Entity>(string where = "", string orderby="")
+        {
+            ICollection<Entity> all = null;
+
+            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            {
+                try
+                {
+                    all = ee.SelectWithOrder(where, orderby);
+                }
+                finally
+                {
+                    LastSqlStatement = ee.LastSqlStatement;
+                }
+            }
+
+            return all;
+        }
+
+
         /// <summary>
         /// 
         /// </summary>
