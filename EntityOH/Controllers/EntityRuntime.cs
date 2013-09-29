@@ -233,7 +233,7 @@ namespace EntityOH.Controllers
             foreach (var fr in FieldsRuntime)
             {
                 //  int IDataReader.GetOrdinal(string pp.Name)
-                var ReaderOrdinal = Expression.Call(RecordParameterExpression, GetOrdinalInfo, Expression.Constant(EntityType.Name + EntityRuntimeHelper.AliasSeparator + fr.Value.FieldPropertyInfo.Name)); //selecting inside reader with the property name because we are renaming the return columns with the names of the entity properties.
+                var ReaderOrdinal = Expression.Call(RecordParameterExpression, GetOrdinalInfo, Expression.Constant(EntityType.Name + AliasSeparator + fr.Value.FieldPropertyInfo.Name)); //selecting inside reader with the property name because we are renaming the return columns with the names of the entity properties.
 
                 // object IDataReader.GetObject(int ordinal )
                 var RecordValue = Expression.Call(RecordParameterExpression, GetValueInfo, ReaderOrdinal);
@@ -256,7 +256,7 @@ namespace EntityOH.Controllers
                         // prevent second level indirection in referencing.
                         if (rf.FieldType.IsValueType == true || rf.FieldType == typeof(string) || rf.FieldType == typeof(byte[]))
                         {
-                            var RefReaderOrdinal = Expression.Call(RecordParameterExpression, GetOrdinalInfo, Expression.Constant(fr.Value.FieldType.Name + EntityRuntimeHelper.AliasSeparator + rf.FieldPropertyInfo.Name));
+                            var RefReaderOrdinal = Expression.Call(RecordParameterExpression, GetOrdinalInfo, Expression.Constant(fr.Value.FieldType.Name + AliasSeparator + rf.FieldPropertyInfo.Name));
                             var RefRecordValue = Expression.Call(RecordParameterExpression, GetValueInfo, RefReaderOrdinal);
                             var RefValue = Expression.Convert(RefRecordValue, rf.FieldType);
                             var Refbinding = Expression.Bind(rf.FieldPropertyInfo, RefValue);

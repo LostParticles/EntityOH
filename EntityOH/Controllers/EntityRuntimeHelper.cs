@@ -9,10 +9,10 @@ namespace EntityOH.Controllers
 {
     internal partial class EntityRuntime<Entity>
     {
+        public const string AliasSeparator = "__";
         private static class EntityRuntimeHelper
         {
 
-            internal const string AliasSeparator = "__";
 
             private static Dictionary<Type, string> EntitiesPhysicalName = new Dictionary<Type, string>();
 
