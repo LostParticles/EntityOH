@@ -481,7 +481,92 @@ namespace EntityOH.Controllers
                 reader.Close();
             }
 
-            
+
+            _Connection.CloseConnection();
+
+            return ets;
+
+
+        }
+
+
+        public ICollection<Entity> SelectPagedWithOrder(string whereClause, string orderByClause, int pageIndex, int pageItemsCount, out int totalDiscoveredCount)
+        {
+
+            ExecutePreOperations();
+
+
+            string pid = EntityRuntime.RunningPhysicalName + "." +
+                EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
+
+            string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1}";
+
+            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
+
+            if (!string.IsNullOrEmpty(GroupByExpression))
+                SelectAll += " GROUP BY " + GroupByExpression;
+
+            if (!string.IsNullOrEmpty(whereClause))
+                SelectAll += " WHERE " + whereClause;
+
+
+            string SelectPaged = "SELECT * FROM ({1}) AS PagedQuery WHERE Row_Count BETWEEN {2} and {3}";
+
+
+            int fromRow = pageIndex * pageItemsCount;
+
+            int toRow = fromRow + pageItemsCount;
+
+            fromRow++;  // increase one to align the first item on the first of the page.
+
+            string FinalSelect = string.Format(SelectPaged, FieldsList, SelectAll, fromRow, toRow);
+
+            if (!string.IsNullOrEmpty(orderByClause))
+            {
+                // the order by field is different in the name and we should modify the name to be the same name in the generated 
+                //  sql statement above
+                /* SELECT column-list
+                    FROM table_name [WHERE condition]
+                    [ORDER BY column1 [, column2, .. columnN] [DESC]];
+                 */
+
+                FinalSelect += " ORDER BY ";
+
+                string[] OrderByList = orderByClause.Split(',');
+                foreach (string orderby in OrderByList)
+                {
+                    string[] oList = orderby.Trim().Split(' ');
+
+                    // Format:  TableName.FieldPhysicalName AS EntityName__PropertyName
+                    //_FieldsList.Add(physicalTableName + "." + fld.PhysicalName + " AS " + entityType.Name + AliasSeparator + fld.FieldPropertyInfo.Name);
+
+                    string fld = EntityRuntime.RunningPhysicalName + EntityRuntime<Entity>.AliasSeparator + oList[0];
+
+                    FinalSelect += fld;
+
+                    if (oList.Length > 1) FinalSelect += " " + oList[1];
+
+                }
+
+                
+            }
+
+
+            totalDiscoveredCount = (int)_Connection.ExecuteScalar(GetCountCommand(whereClause));
+
+            _LastSqlStatement = FinalSelect;
+
+            List<Entity> ets = new List<Entity>();
+
+            using (var reader = _Connection.ExecuteReader(FinalSelect))
+            {
+                while (reader.Read())
+                {
+                    ets.Add(EntityRuntime<Entity>.MappingFunction(reader));
+                }
+                reader.Close();
+            }
+
 
             _Connection.CloseConnection();
 
@@ -508,6 +593,26 @@ namespace EntityOH.Controllers
             }
             return result;
         }
+
+
+        /// <summary>
+        /// gets the count of entities based on criteria
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <returns></returns>
+        public long Count(string whereClause)
+        {
+            ExecutePreOperations();
+
+            long result = 0;
+            using (var CountCommand = GetCountCommand(whereClause))
+            {
+                _LastSqlStatement = CountCommand.CommandText;
+                result = long.Parse(_Connection.ExecuteScalar(CountCommand).ToString());
+            }
+            return result;
+        }
+
 
         /// <summary>
         /// Get the sum of specific field or zero if return value is null.

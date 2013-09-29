@@ -171,6 +171,37 @@ namespace EntityOH
         }
 
 
+
+        /// <summary>
+        /// Select a page from the database of the required entity.
+        /// </summary>
+        /// <typeparam name="Entity">Class that resemble the table in the database.</typeparam>
+        /// <param name="pageIndex">required page index</param>
+        /// <param name="pageItemsCount">how many items in the page.</param>
+        /// <param name="totalDiscoveredCount">The total discovered entities from this selection</param>
+        /// <param name="where"></param>
+        /// <param name="orderby"></param>
+        /// <returns></returns>
+        public ICollection<Entity> SelectPage<Entity>(int pageIndex, int pageItemsCount, out int totalDiscoveredCount, string where = "", string orderby = "")
+        {
+            ICollection<Entity> all = null;
+
+            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            {
+                try
+                {
+                    all = ee.SelectPagedWithOrder(where, orderby, pageIndex, pageItemsCount, out totalDiscoveredCount);
+                }
+                finally
+                {
+                    LastSqlStatement = ee.LastSqlStatement;
+                }
+            }
+
+            return all;
+        }
+        
+
         /// <summary>
         /// 
         /// </summary>
@@ -303,14 +334,42 @@ namespace EntityOH
 
 
         /// <summary>
-        /// Execute the sql statement and retuen scalar value of the type parameter.
+        /// Returns the count of entity based on optional criteria.
+        /// </summary>
+        /// <typeparam name="Entity"></typeparam>
+        /// <param name="where"></param>
+        /// <returns></returns>
+        public long Count<Entity>(string where = "")
+        {
+            long count = -1;
+            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(where))
+                        count  = ee.Count();
+                    else
+                        count = ee.Count(where);
+                }
+                finally
+                {
+                    LastSqlStatement = ee.LastSqlStatement;
+                }
+            }
+
+            return count;
+        }
+
+
+        /// <summary>
+        /// Execute the sql statement and return scalar value of the type parameter.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="sql"></param>
         /// <returns></returns>
         public T ExecuteScalar<T>(string sql)
         {
-                        LastSqlStatement = sql;
+            LastSqlStatement = sql;
 
             _UnderlyingConnection.OpenConnection();
 
@@ -361,6 +420,9 @@ namespace EntityOH
 
             return data;
         }
+
+
+
     }
 
 

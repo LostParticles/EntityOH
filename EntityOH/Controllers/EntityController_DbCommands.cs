@@ -126,8 +126,8 @@ namespace EntityOH.Controllers
         internal DbCommand GetCountCommand(string whereClause)
         {
             string SelectTemplate = "SELECT COUNT(*) FROM " + EntityRuntime<Entity>.FromClause;
-            SelectTemplate += " WHERE " + whereClause;
 
+            if (!string.IsNullOrEmpty(whereClause)) SelectTemplate += " WHERE " + whereClause;
 
             var finalSelect = string.Format(SelectTemplate);
 
