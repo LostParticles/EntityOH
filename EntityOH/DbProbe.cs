@@ -172,6 +172,8 @@ namespace EntityOH
 
 
 
+        
+
         /// <summary>
         /// Select a page from the database of the required entity.
         /// </summary>
@@ -182,10 +184,10 @@ namespace EntityOH
         /// <param name="where"></param>
         /// <param name="orderby"></param>
         /// <returns></returns>
-        public ICollection<Entity> SelectPage<Entity>(int pageIndex, int pageItemsCount, out int totalDiscoveredCount, string where = "", string orderby = "")
+        public ICollection<Entity> SelectPage<Entity>(int pageIndex, int pageItemsCount, string where = "", string orderby = "")
         {
             ICollection<Entity> all = null;
-
+            int totalDiscoveredCount;
             using (var ee = new EntityController<Entity>(_UnderlyingConnection))
             {
                 try

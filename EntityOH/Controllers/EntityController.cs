@@ -434,7 +434,14 @@ namespace EntityOH.Controllers
         }
 
 
-
+        /// <summary>
+        /// Select by paging enabled.
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <param name="pageIndex"></param>
+        /// <param name="pageItemsCount"></param>
+        /// <param name="totalDiscoveredCount"></param>
+        /// <returns></returns>
         public ICollection<Entity> SelectPaged(string whereClause, int pageIndex, int pageItemsCount, out int totalDiscoveredCount)
         {
 
@@ -490,7 +497,18 @@ namespace EntityOH.Controllers
         }
 
 
-        public ICollection<Entity> SelectPagedWithOrder(string whereClause, string orderByClause, int pageIndex, int pageItemsCount, out int totalDiscoveredCount)
+        /// <summary> 
+        /// Select by paging enabled with where and order by clauses
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <param name="orderByClause"></param>
+        /// <param name="pageIndex"></param>
+        /// <param name="pageItemsCount"></param>
+        /// <param name="totalDiscoveredCount"></param>
+        /// <returns></returns>
+        public ICollection<Entity> SelectPagedWithOrder(string whereClause, string orderByClause
+            , int pageIndex, int pageItemsCount
+            , out int totalDiscoveredCount)
         {
 
             ExecutePreOperations();
@@ -547,8 +565,6 @@ namespace EntityOH.Controllers
                     if (oList.Length > 1) FinalSelect += " " + oList[1];
 
                 }
-
-                
             }
 
 
@@ -571,8 +587,6 @@ namespace EntityOH.Controllers
             _Connection.CloseConnection();
 
             return ets;
-
-
         }
 
 
