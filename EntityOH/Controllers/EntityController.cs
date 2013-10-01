@@ -513,11 +513,32 @@ namespace EntityOH.Controllers
 
             ExecutePreOperations();
 
+            
+            // The paging required ROW_NUMBER() function OVER (ORDER BY clause)
+            // first thing .. the primary id is used as orderby clause as default 
+            // but if the user specified something other than that .. it is used instead.
 
-            string pid = EntityRuntime.RunningPhysicalName + "." +
-                EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
 
-            string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1}";
+            
+            string OrderByDefault = string.Empty;
+
+            if (!string.IsNullOrEmpty(orderByClause))
+            {
+                OrderByDefault = orderByClause;
+            }
+            else
+            {
+
+                OrderByDefault = EntityRuntime.RunningPhysicalName + "." +
+                    EntityRuntime<Entity>.FieldsRuntime.FirstOrDefault((fr) => fr.Value.Primary == true).Value.PhysicalName;
+
+                if (string.IsNullOrEmpty(OrderByDefault))
+                {
+                    throw new EntityException("SelectPagedWithOrder Function needs the entity to have a field marked with primary to order based on it.\nEither mark one of the fields as primary field, or write down the required order by clause while calling this function");
+                }
+            }
+
+            string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + OrderByDefault + ") AS Row_Count, {0} FROM {1}";
 
             string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
 
@@ -539,33 +560,7 @@ namespace EntityOH.Controllers
 
             string FinalSelect = string.Format(SelectPaged, FieldsList, SelectAll, fromRow, toRow);
 
-            if (!string.IsNullOrEmpty(orderByClause))
-            {
-                // the order by field is different in the name and we should modify the name to be the same name in the generated 
-                //  sql statement above
-                /* SELECT column-list
-                    FROM table_name [WHERE condition]
-                    [ORDER BY column1 [, column2, .. columnN] [DESC]];
-                 */
 
-                FinalSelect += " ORDER BY ";
-
-                string[] OrderByList = orderByClause.Split(',');
-                foreach (string orderby in OrderByList)
-                {
-                    string[] oList = orderby.Trim().Split(' ');
-
-                    // Format:  TableName.FieldPhysicalName AS EntityName__PropertyName
-                    //_FieldsList.Add(physicalTableName + "." + fld.PhysicalName + " AS " + entityType.Name + AliasSeparator + fld.FieldPropertyInfo.Name);
-
-                    string fld = EntityRuntime.RunningPhysicalName + EntityRuntime<Entity>.AliasSeparator + oList[0];
-
-                    FinalSelect += fld;
-
-                    if (oList.Length > 1) FinalSelect += " " + oList[1];
-
-                }
-            }
 
 
             totalDiscoveredCount = (int)_Connection.ExecuteScalar(GetCountCommand(whereClause));
@@ -914,5 +909,19 @@ namespace EntityOH.Controllers
         }
 
         #endregion
+
+
+
+        /// <summary>
+        /// The name as it appears in inner sql statements
+        /// </summary>
+        /// <param name="fieldName"></param>
+        /// <returns></returns>
+        public string FieldInnerName(string fieldName)
+        {
+            string fld = EntityRuntime.RunningPhysicalName + EntityRuntime<Entity>.AliasSeparator + fieldName;
+
+            return fld;
+        }
     }
 }
