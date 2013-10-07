@@ -191,7 +191,7 @@ namespace EntityOH.Controllers
             {
                 if (fr.Value.Primary)
                 {
-                    Conditions += fr.Value.PhysicalName + " = @" + fr.Value.PhysicalName + ",";
+                    Conditions += fr.Value.PhysicalName + " = @" + fr.Value.PhysicalName + " AND ";
                 }
                 else
                 {
@@ -205,7 +205,7 @@ namespace EntityOH.Controllers
 
             if (string.IsNullOrEmpty(Conditions)) throw new NotImplementedException("Selecting entity without primary field is not implemented\nPlease consider adding decorating your entity fields with one or more primary ids.");
 
-            Conditions = Conditions.TrimEnd(',');
+            Conditions = Conditions.Substring(0, Conditions.Length - 5);
             updatelist = updatelist.TrimEnd(',');
 
             var UpdateSelect = string.Format(UpdateTemplate, updatelist, Conditions);

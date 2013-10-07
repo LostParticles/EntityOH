@@ -848,6 +848,7 @@ namespace EntityOH.Controllers
                     command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                 }
 
+                _LastSqlStatement = command.CommandText;
                 _Connection.ExecuteNonQuery(command);
             }
             _Connection.CloseConnection();
