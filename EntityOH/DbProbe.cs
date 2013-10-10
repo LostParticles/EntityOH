@@ -423,7 +423,19 @@ namespace EntityOH
 
 
 
+        public void Delete<Entity>(Entity entity)
+        {
+            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            {
+                try
+                {
+                    ee.Delete(entity);
+                }
+                finally
+                {
+                    LastSqlStatement = ee.LastSqlStatement;
+                }
+            }
+        }
     }
-
-
 }
