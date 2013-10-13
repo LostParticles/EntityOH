@@ -23,9 +23,7 @@ namespace EntityOH.Controllers
     public partial class EntityController<Entity> : IDisposable
     {
 
-
-        private EntityRuntime<Entity> EntityRuntime = new EntityRuntime<Entity>();
-
+        readonly DbCommandsMaker<Entity> DatabaseCommands;
 
         /// <summary>
         /// Current Entity Type
@@ -48,22 +46,26 @@ namespace EntityOH.Controllers
             }
         }
 
+
+        #region constructors
+
         public EntityController()
         {
             _Connection = SmartConnection.GetSmartConnection();
+            DatabaseCommands = _Connection.GetCommandsMaker<Entity>();
         }
-
 
         public EntityController(string connectionKey)
         {
             _Connection = SmartConnection.GetSmartConnection(connectionKey);
+            DatabaseCommands = _Connection.GetCommandsMaker<Entity>();
         }
 
         internal EntityController(SmartConnection sm)
         {
             _Connection = sm;
+            DatabaseCommands = _Connection.GetCommandsMaker<Entity>();
         }
-
 
         /// <summary>
         /// Controller constructor for extra options in initating controller.
@@ -72,14 +74,19 @@ namespace EntityOH.Controllers
         public EntityController(COptions options)
         {
             if (!string.IsNullOrEmpty(options.ConnectionKey))
+            {
                 _Connection = SmartConnection.GetSmartConnection(options.ConnectionKey);
+                DatabaseCommands = _Connection.GetCommandsMaker<Entity>();
+                DatabaseCommands.EntityRuntimeInformation.RunningPhysicalName = options.TableName;
+            }
             else
+            {
                 _Connection = SmartConnection.GetSmartConnection();
-
-
-            EntityRuntime.RunningPhysicalName = options.TableName;
-
+                DatabaseCommands = _Connection.GetCommandsMaker<Entity>();
+            }
         }
+
+        #endregion
 
         private string _FieldsList = string.Empty;
         public string FieldsList
@@ -89,7 +96,7 @@ namespace EntityOH.Controllers
                 if (string.IsNullOrEmpty(_FieldsList))
                 {
                     StringBuilder sb = new StringBuilder();
-                    var fls = EntityRuntime.RunningFieldsList;
+                    var fls = DatabaseCommands.EntityRuntimeInformation.RunningFieldsList;
 
                     foreach (var fl in fls)
                     {
@@ -111,7 +118,7 @@ namespace EntityOH.Controllers
         {
             get
             {
-                return EntityRuntime.RunningFromClause;
+                return DatabaseCommands.EntityRuntimeInformation.RunningFromClause;
             }
         }
 
@@ -119,7 +126,7 @@ namespace EntityOH.Controllers
         {
             get
             {
-                return EntityRuntime.RunningGroupByExpression;
+                return DatabaseCommands.EntityRuntimeInformation.RunningGroupByExpression;
             }
         }
 
@@ -263,7 +270,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
 
-            string pid = EntityRuntime.RunningPhysicalName + "." +
+            string pid = DatabaseCommands.EntityRuntimeInformation.RunningPhysicalName + "." +
                 EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
 
             string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1}";
@@ -285,7 +292,7 @@ namespace EntityOH.Controllers
 
             string FinalSelect = string.Format(SelectPaged, FieldsList, SelectAll, fromRow, toRow);
 
-            totalDiscoveredCount = (int)_Connection.ExecuteScalar(GetCountCommand());
+            totalDiscoveredCount = (int)_Connection.ExecuteScalar(DatabaseCommands.GetCountCommand());
 
             _LastSqlStatement = FinalSelect;
             List<Entity> ets = new List<Entity>();
@@ -448,7 +455,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
 
-            string pid = EntityRuntime.RunningPhysicalName + "." +
+            string pid = DatabaseCommands.EntityRuntimeInformation.RunningPhysicalName + "." +
                 EntityRuntime<Entity>.FieldsRuntime.First((fr) => fr.Value.Primary == true).Value.PhysicalName;
 
             string SelectAllStatement = "SELECT ROW_NUMBER() OVER (ORDER BY " + pid + ") AS Row_Count, {0} FROM {1}";
@@ -473,7 +480,7 @@ namespace EntityOH.Controllers
 
             string FinalSelect = string.Format(SelectPaged, FieldsList, SelectAll, fromRow, toRow);
 
-            totalDiscoveredCount = (int)_Connection.ExecuteScalar(GetCountCommand(whereClause));
+            totalDiscoveredCount = (int)_Connection.ExecuteScalar(DatabaseCommands.GetCountCommand(whereClause));
 
             _LastSqlStatement = FinalSelect;
 
@@ -529,7 +536,7 @@ namespace EntityOH.Controllers
             else
             {
 
-                OrderByDefault = EntityRuntime.RunningPhysicalName + "." +
+                OrderByDefault = DatabaseCommands.EntityRuntimeInformation.RunningPhysicalName + "." +
                     EntityRuntime<Entity>.FieldsRuntime.FirstOrDefault((fr) => fr.Value.Primary == true).Value.PhysicalName;
 
                 if (string.IsNullOrEmpty(OrderByDefault))
@@ -563,7 +570,7 @@ namespace EntityOH.Controllers
 
 
 
-            totalDiscoveredCount = (int)_Connection.ExecuteScalar(GetCountCommand(whereClause));
+            totalDiscoveredCount = (int)_Connection.ExecuteScalar(DatabaseCommands.GetCountCommand(whereClause));
 
             _LastSqlStatement = FinalSelect;
 
@@ -594,7 +601,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
             long result = 0;
-            using (var CountCommand = GetCountCommand())
+            using (var CountCommand = DatabaseCommands.GetCountCommand())
             {
                 _LastSqlStatement = CountCommand.CommandText;
                  result = long.Parse(_Connection.ExecuteScalar(CountCommand).ToString());
@@ -614,7 +621,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
             long result = 0;
-            using (var CountCommand = GetCountCommand(whereClause))
+            using (var CountCommand = DatabaseCommands.GetCountCommand(whereClause))
             {
                 _LastSqlStatement = CountCommand.CommandText;
                 result = long.Parse(_Connection.ExecuteScalar(CountCommand).ToString());
@@ -633,7 +640,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
             double result = 0;
-            using (var SumCommand = GetAggregateFunctionCommand("SUM", field))
+            using (var SumCommand = DatabaseCommands.GetAggregateFunctionCommand("SUM", field))
             {
                 _LastSqlStatement = SumCommand.CommandText;
                 var reo = _Connection.ExecuteScalar(SumCommand);
@@ -659,7 +666,7 @@ namespace EntityOH.Controllers
             ExecutePreOperations();
 
             double result = 0;
-            using (var SumCommand = GetAggregateFunctionCommand(where, "SUM", field))
+            using (var SumCommand = DatabaseCommands.GetAggregateFunctionCommand(where, "SUM", field))
             {
                 _LastSqlStatement = SumCommand.CommandText;
                 var reo = _Connection.ExecuteScalar(SumCommand);
@@ -685,7 +692,7 @@ namespace EntityOH.Controllers
             EntityFieldRuntime IdentityFieldRuntime;
 
 
-            using (DbCommand command = GetInsertCommand(out IdentityFieldRuntime))
+            using (DbCommand command = DatabaseCommands.GetInsertCommand(out IdentityFieldRuntime))
             {
                 _LastSqlStatement = command.CommandText;
 
@@ -693,14 +700,26 @@ namespace EntityOH.Controllers
                 {
                     if (!f.Value.Identity)
                     {
-                        command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                        command.Parameters.Add(DatabaseCommands.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                     }
                 }
 
                 if (IdentityFieldRuntime != null)
                 {
-                    //update identity field in entity.
-                    object identity = _Connection.ExecuteScalar(command);
+                    object identity = null;
+
+                    if (DatabaseCommands.SupportsMultipleQueries)
+                    {
+                        //update identity field in entity.
+                        identity = _Connection.ExecuteScalar(command);
+                    }
+                    else
+                    {
+                        // run the insert statement.
+                        _Connection.ExecuteNonQuery(command);
+
+                        identity = _Connection.ExecuteScalar(DatabaseCommands.GetIdentityCommand());
+                    }
 
                     object converted = Convert.ChangeType(identity, IdentityFieldRuntime.FieldType);
 
@@ -742,7 +761,8 @@ namespace EntityOH.Controllers
 
             EntityFieldRuntime IdentityFieldRuntime;
 
-            using (DbCommand command = GetInsertCommand(out IdentityFieldRuntime))
+            
+            using (DbCommand command = DatabaseCommands.GetInsertCommand(out IdentityFieldRuntime))
             {
                 _LastSqlStatement = command.CommandText;
 
@@ -754,11 +774,11 @@ namespace EntityOH.Controllers
                         if (!f.Value.Identity)
                         {
                             if (ie == 0)
-                                command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                                command.Parameters.Add(DatabaseCommands.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                             else
                             {
                                 // already declared
-                                command.Parameters[GetValidParameterName(f.Value.PhysicalName)].Value = f.Value.FieldReader(entity);
+                                command.Parameters[DatabaseCommands.GetValidParameterName(f.Value.PhysicalName)].Value = f.Value.FieldReader(entity);
                             }
                         }
                     }
@@ -767,10 +787,7 @@ namespace EntityOH.Controllers
 
                     ie++;
                 }
-
-                
             }
-
         }
 
 
@@ -782,13 +799,13 @@ namespace EntityOH.Controllers
         {
             ExecutePreOperations();
 
-            using (DbCommand command = GetSelectCommand())
+            using (DbCommand command = DatabaseCommands.GetSelectCommand())
             {
                 foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
                 {
                     if (f.Value.Primary)
                     {
-                        command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                        command.Parameters.Add(DatabaseCommands.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                     }
                 }
 
@@ -801,8 +818,6 @@ namespace EntityOH.Controllers
 
                     reader.Close();
                 }
-
-                
             }
 
             _Connection.CloseConnection();
@@ -817,13 +832,13 @@ namespace EntityOH.Controllers
         {
             ExecutePreOperations();
 
-            using (DbCommand command = GetDeleteCommand())
+            using (DbCommand command = DatabaseCommands.GetDeleteCommand())
             {
                 foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
                 {
                     if (f.Value.Primary)
                     {
-                        command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                        command.Parameters.Add(DatabaseCommands.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                     }
                 }
                 _LastSqlStatement = command.CommandText;
@@ -840,12 +855,12 @@ namespace EntityOH.Controllers
         {
             ExecutePreOperations();
 
-            using (DbCommand command = GetUpdateCommand())
+            using (DbCommand command = DatabaseCommands.GetUpdateCommand())
             {
-
+                
                 foreach (var f in EntityRuntime<Entity>.FieldsRuntime)
                 {
-                    command.Parameters.Add(GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
+                    command.Parameters.Add(DatabaseCommands.GetParameter(f.Value.PhysicalName, f.Value.FieldReader(entity)));
                 }
 
                 _LastSqlStatement = command.CommandText;
@@ -882,7 +897,7 @@ namespace EntityOH.Controllers
 
             List<Entity> ets = new List<Entity>();
 
-            using (var command = GetStoredProcedureCommand(procName))
+            using (var command = DatabaseCommands.GetStoredProcedureCommand(procName))
             {
                 using (var reader = _Connection.ExecuteReader(command))
                 {
@@ -920,7 +935,7 @@ namespace EntityOH.Controllers
         /// <returns></returns>
         public string FieldInnerName(string fieldName)
         {
-            string fld = EntityRuntime.RunningPhysicalName + EntityRuntime<Entity>.AliasSeparator + fieldName;
+            string fld = DatabaseCommands.EntityRuntimeInformation.RunningPhysicalName + EntityRuntime<Entity>.AliasSeparator + fieldName;
 
             return fld;
         }

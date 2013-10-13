@@ -16,7 +16,7 @@ namespace EntityOH.Controllers
     /// Hold the runtime information of entity.
     /// </summary>
     /// <typeparam name="Entity"></typeparam>
-    internal  partial class EntityRuntime<Entity>
+    public partial class EntityRuntime<Entity>
     {
 
 

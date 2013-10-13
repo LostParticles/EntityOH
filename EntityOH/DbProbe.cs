@@ -13,15 +13,16 @@ namespace EntityOH
     /// Database Probe for fast access to the database data.
     /// for any complex data access please <see cref="EntityController"/> Instead.
     /// </summary>
-    public class DbProbe
+    public class DbProbe:IDisposable
     {
-
-
         /// <summary>
         /// Shows the last sql statement done on the database.
         /// </summary>
         public string LastSqlStatement { get; private set; }
 
+        /// <summary>
+        /// The smart connection used by the probe.
+        /// </summary>
         private readonly SmartConnection _UnderlyingConnection;
         private DbProbe(SmartConnection sm)
         {
@@ -33,20 +34,20 @@ namespace EntityOH
         {
             DbProbe dbp = new DbProbe(SmartConnection.GetSmartConnection());
             return dbp;
-
         }
 
         /// <summary>
         /// Get Database Probe by connection key.
         /// </summary>
-        /// <param name="connectionKey"></param>
+        /// <param name="connectionKey">the name of connection in the configuration file.</param>
         /// <returns></returns>
         public static DbProbe Db(string connectionKey)
         {
             DbProbe dbp = new DbProbe(SmartConnection.GetSmartConnection(connectionKey));
             return dbp;
-            
         }
+
+        
 
         
         /// <summary>
@@ -132,19 +133,17 @@ namespace EntityOH
         {
             ICollection<Entity> all = null;
 
-            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
             {
-                try
-                {
-                    if (string.IsNullOrEmpty(where))
-                        all = ee.Select();
-                    else
-                        all = ee.Select(where);
-                }
-                finally
-                {
-                    LastSqlStatement = ee.LastSqlStatement;
-                }
+                if (string.IsNullOrEmpty(where))
+                    all = ee.Select();
+                else
+                    all = ee.Select(where);
+            }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
             }
 
             return all;
@@ -155,16 +154,14 @@ namespace EntityOH
         {
             ICollection<Entity> all = null;
 
-            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
             {
-                try
-                {
-                    all = ee.SelectWithOrder(where, orderby);
-                }
-                finally
-                {
-                    LastSqlStatement = ee.LastSqlStatement;
-                }
+                all = ee.SelectWithOrder(where, orderby);
+            }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
             }
 
             return all;
@@ -186,16 +183,14 @@ namespace EntityOH
         {
             ICollection<Entity> all = null;
             int totalDiscoveredCount;
-            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
             {
-                try
-                {
-                    all = ee.SelectPagedWithOrder(where, orderby, pageIndex, pageItemsCount, out totalDiscoveredCount);
-                }
-                finally
-                {
-                    LastSqlStatement = ee.LastSqlStatement;
-                }
+                all = ee.SelectPagedWithOrder(where, orderby, pageIndex, pageItemsCount, out totalDiscoveredCount);
+            }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
             }
 
             return all;
@@ -212,19 +207,17 @@ namespace EntityOH
         {
             ICollection<Entity> all = null;
 
-            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
             {
-                try
-                {
-                    if (string.IsNullOrEmpty(where))
-                        all = ee.SelectDistinct();
-                    else
-                        all = ee.SelectDistinct(where);
-                }
-                finally
-                {
-                    LastSqlStatement = ee.LastSqlStatement;
-                }
+                if (string.IsNullOrEmpty(where))
+                    all = ee.SelectDistinct();
+                else
+                    all = ee.SelectDistinct(where);
+            }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
             }
 
             return all;
@@ -239,16 +232,14 @@ namespace EntityOH
         /// <param name="entity"></param>
         public void Insert<Entity>(Entity entity)
         {
-            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
             {
-                try
-                {
-                    ee.Insert(entity);
-                }
-                finally
-                {
-                    LastSqlStatement = ee.LastSqlStatement;
-                }
+                ee.Insert(entity);
+            }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
             }
         }
 
@@ -260,16 +251,14 @@ namespace EntityOH
         /// <param name="entity"></param>
         public void Update<Entity>(Entity entity)
         {
-            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
             {
-                try
-                {
-                    ee.Update(entity);
-                }
-                finally
-                {
-                    LastSqlStatement = ee.LastSqlStatement;
-                }
+                ee.Update(entity);
+            }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
             }
         }
 
@@ -294,7 +283,6 @@ namespace EntityOH
         /// <returns></returns>
         public DataTable ExecuteDataTable(string sql)
         {
-
             LastSqlStatement = sql;
 
             _UnderlyingConnection.OpenConnection();
@@ -342,19 +330,17 @@ namespace EntityOH
         public long Count<Entity>(string where = "")
         {
             long count = -1;
-            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
             {
-                try
-                {
-                    if (string.IsNullOrEmpty(where))
-                        count  = ee.Count();
-                    else
-                        count = ee.Count(where);
-                }
-                finally
-                {
-                    LastSqlStatement = ee.LastSqlStatement;
-                }
+                if (string.IsNullOrEmpty(where))
+                    count  = ee.Count();
+                else
+                    count = ee.Count(where);
+            }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
             }
 
             return count;
@@ -371,8 +357,6 @@ namespace EntityOH
         {
             LastSqlStatement = sql;
 
-            _UnderlyingConnection.OpenConnection();
-
             T data = default(T);
 
             try
@@ -381,7 +365,7 @@ namespace EntityOH
             }
             finally
             {
-                _UnderlyingConnection.CloseConnection();
+                LastSqlStatement = sql;
             }
 
             return data;
@@ -425,17 +409,33 @@ namespace EntityOH
 
         public void Delete<Entity>(Entity entity)
         {
-            using (var ee = new EntityController<Entity>(_UnderlyingConnection))
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
             {
-                try
-                {
-                    ee.Delete(entity);
-                }
-                finally
-                {
-                    LastSqlStatement = ee.LastSqlStatement;
-                }
+                ee.Delete(entity);
             }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
+            }
+        }
+
+        public void CreateTable<Entity>()
+        {
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
+            {
+                ee.CreateTable();
+            }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
+            }
+        }
+
+        public void Dispose()
+        {
+            _UnderlyingConnection.Dispose();
         }
     }
 }

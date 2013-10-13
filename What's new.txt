@@ -1,3 +1,8 @@
+- Refactoring the code to accept the Sql Server Compact database 4
+
+
+
+
 - Fixed the update method when the entity has more than one primary field
 
 * 2011-3-27
