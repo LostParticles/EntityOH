@@ -3,19 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
-using System.Data.SqlClient;
 using System.Configuration;
 using System.Data.Common;
-using System.Data.OleDb;
 
 namespace EntityOH.Controllers.Connections
 {
     public class SmartConnection : IDisposable
     {
-
-
-        private static string _DefaultConnectionString;
-
         private static string _DefaultConnectionKey;
 
 
@@ -31,10 +25,17 @@ namespace EntityOH.Controllers.Connections
             set
             {
                 _DefaultConnectionKey = value;
-                _DefaultConnectionString = ConfigurationManager.ConnectionStrings[value].ConnectionString;
             }
         }
 
+
+        public static string DefaultConnectionString
+        {
+            get
+            {
+                return ConfigurationManager.ConnectionStrings[_DefaultConnectionKey].ConnectionString;
+            }
+        }
         
 
         /// <summary>
@@ -54,13 +55,15 @@ namespace EntityOH.Controllers.Connections
         /// <returns></returns>
         public static SmartConnection GetSmartConnection()
         {
-            return new SmartConnection(_DefaultConnectionString);
+            return new SmartConnection(DefaultConnectionString);
         }
 
 
         public static SmartConnection GetSmartConnection(string connectionKey)
         {
-            return new SmartConnection(ConfigurationManager.ConnectionStrings[connectionKey].ConnectionString);
+            var cnn = ConfigurationManager.ConnectionStrings[connectionKey];
+
+            return new SmartConnection(cnn.ConnectionString, cnn.ProviderName);
         }
 
         public string ConnectionString
@@ -69,27 +72,34 @@ namespace EntityOH.Controllers.Connections
             private set;
         }
 
-        DbConnection _InternalConnection;
-        SmartConnectionType _ConnectionType;
+        /// <summary>
+        /// Specify the provider of the database functionality
+        /// the default is System.Data.SqlClient  for sql server
+        /// other usages is also System.Data.SqlServerCe  for sql server compact.
+        /// </summary>
+        public string Provider
+        {
+            get;
+            private set;
+        }
 
-        private SmartConnection(string connectionString)
+        DbConnection _InternalConnection;
+
+        public SmartConnection(string connectionString, string provider = "System.Data.SqlClient")
         {
 
             ConnectionString = connectionString;
 
-            // we need to know the provider.
-            if (ConnectionString.Contains("OLEDB"))
-            {
-                _InternalConnection = new OleDbConnection(ConnectionString);
-                _ConnectionType = SmartConnectionType.OleConnection;
-            }
-            else
-            {
-                // connection here for sql server.
-                _InternalConnection = new SqlConnection(ConnectionString);
-                _ConnectionType = SmartConnectionType.SqlServerConnection;
-            }
+            if (string.IsNullOrEmpty(provider)) Provider = "System.Data.SqlClient";
+            else Provider = provider;
 
+            _InternalConnection = DbCommandsFactory.GetConnection(Provider, connectionString);
+
+        }
+
+        public DbCommandsMaker<Entity> GetCommandsMaker<Entity>()
+        {
+            return DbCommandsFactory.GetCommandsMaker<Entity>(Provider);
         }
         
 
@@ -99,7 +109,11 @@ namespace EntityOH.Controllers.Connections
         {
             if (string.IsNullOrEmpty(_InternalConnection.ConnectionString))
             {
-                _InternalConnection.ConnectionString = this.ConnectionString;
+                // the connection has been disposed here so we need to create it again
+
+                _InternalConnection = DbCommandsFactory.GetConnection(Provider, ConnectionString);
+
+                //_InternalConnection.ConnectionString = this.ConnectionString;
                 //throw new EntityException("Where is the connection string ????");
             }
 
@@ -168,15 +182,9 @@ namespace EntityOH.Controllers.Connections
 
         public IDataReader ExecuteReader(string text)
         {
-            DbCommand cmd = null;
-            if (_ConnectionType == SmartConnectionType.SqlServerConnection)
-            {
-                cmd = new SqlCommand(text, (SqlConnection)_InternalConnection);
-            }
-            else
-            {
-                cmd = new OleDbCommand(text, (OleDbConnection)_InternalConnection);
-            }
+            DbCommand cmd = DbCommandsFactory.GetCommand(Provider);
+
+            cmd.CommandText = text;
 
             return ExecuteReader(cmd);
         }
@@ -233,7 +241,10 @@ namespace EntityOH.Controllers.Connections
         internal DbCommand GetExecuteCommand(string sql)
         {
 
-            return new SqlCommand(sql);
+            var cmd = DbCommandsFactory.GetCommand(Provider);
+            cmd.CommandText = sql;
+            return cmd;
+
         }
 
 
@@ -243,21 +254,9 @@ namespace EntityOH.Controllers.Connections
 
         public object ExecuteScalar(string sql)
         {
+            DbCommand cmd = DbCommandsFactory.GetCommand(Provider);
 
-            if (this._ConnectionType == SmartConnectionType.OleConnection)
-            {
-                DbCommand cmd = new OleDbCommand(sql);
-                return ExecuteScalar(cmd);
-            }
-            else if (this._ConnectionType == SmartConnectionType.SqlServerConnection)
-            {
-                DbCommand cmd = new SqlCommand(sql);
-                return ExecuteScalar(cmd);
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
+            return ExecuteScalar(cmd);
         }
 
 

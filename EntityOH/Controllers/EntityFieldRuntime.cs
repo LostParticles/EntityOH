@@ -12,7 +12,7 @@ namespace EntityOH.Controllers
     /// <summary>
     /// Contains the runtime information of entity property and its relation to the database.
     /// </summary>
-    internal class EntityFieldRuntime
+    public class EntityFieldRuntime
     {
         /// <summary>
         /// Physical expression that will be executed on database.

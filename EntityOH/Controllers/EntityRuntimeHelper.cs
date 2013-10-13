@@ -7,7 +7,7 @@ using EntityOH.Attributes;
 
 namespace EntityOH.Controllers
 {
-    internal partial class EntityRuntime<Entity>
+    public partial class EntityRuntime<Entity>
     {
         public const string AliasSeparator = "__";
         private static class EntityRuntimeHelper
