@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Data.Common;
 
-namespace EntityOH.Controllers
+namespace EntityOH.DbCommandsMakers
 {
     public static class DbCommandsFactory
     {
@@ -33,9 +33,12 @@ namespace EntityOH.Controllers
         static Dictionary<Type, DbCommandsMaker<EmptyEntity>> EmptyDbCommands = new Dictionary<Type, DbCommandsMaker<EmptyEntity>>();
 
 
-        // create instance method overhead is negligible because i am caching the results later.
-
-        public static DbConnection GetConnection(string provider, string connectionString)
+        /// <summary>
+        /// Gets the commands maker of this provider
+        /// </summary>
+        /// <param name="provider"></param>
+        /// <returns></returns>
+        public static DbCommandsMaker<EmptyEntity> GetProviderCommandsMaker(string provider)
         {
             Type dbs = DbCommandsProviders[provider];
 
@@ -52,45 +55,29 @@ namespace EntityOH.Controllers
 
                 EmptyDbCommands.Add(dbs, EmptyDbCommand);
             }
+            return EmptyDbCommand;
+        }
 
+        // create instance method overhead is negligible because i am caching the results later.
+
+        public static DbConnection GetConnection(string provider, string connectionString)
+        {
+            var EmptyDbCommand = GetProviderCommandsMaker(provider);
             return EmptyDbCommand.GetNewConnection(connectionString);
         }
 
         public static DbCommand GetCommand(string provider)
         {
-            Type dbs = DbCommandsProviders[provider];
-
-            DbCommandsMaker<EmptyEntity> EmptyDbCommand;
-
-            if (!EmptyDbCommands.TryGetValue(dbs, out EmptyDbCommand))
-            {
-                var dbs_object = dbs.MakeGenericType(typeof(object));
-                object[] args = new object[] { null };
-                EmptyDbCommand = (DbCommandsMaker<EmptyEntity>)Activator.CreateInstance(dbs_object, args);
-
-                EmptyDbCommands.Add(dbs, EmptyDbCommand);
-            }
+            var EmptyDbCommand = GetProviderCommandsMaker(provider);
 
             return EmptyDbCommand.GetNewCommand();
         }
 
-
         public static DbCommandsMaker<Entity> GetCommandsMaker<Entity>(string provider)
         {
-            Type dbs = DbCommandsProviders[provider];
-
-            DbCommandsMaker<EmptyEntity> EmptyDbCommand;
-
-            if (!EmptyDbCommands.TryGetValue(dbs, out EmptyDbCommand))
-            {
-                var dbs_object = dbs.MakeGenericType(typeof(object));
-                object[] args = new object[] { null };
-                EmptyDbCommand = (DbCommandsMaker<EmptyEntity>)Activator.CreateInstance(dbs_object, args);
-
-                EmptyDbCommands.Add(dbs, EmptyDbCommand);
-            }
-
+            var EmptyDbCommand = GetProviderCommandsMaker(provider);
             return EmptyDbCommand.GetThisMaker<Entity>();
         }
+    
     }
 }

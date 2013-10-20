@@ -5,9 +5,10 @@ using System.Text;
 using System.Data.Common;
 
 using System.Data.OleDb;
+using EntityOH.Controllers;
 
 
-namespace EntityOH.Controllers
+namespace EntityOH.DbCommandsMakers
 {
     public class OleDbCommandsMaker<Entity> : DbCommandsMaker<Entity>
     {
@@ -87,11 +88,15 @@ namespace EntityOH.Controllers
             throw new NotImplementedException();
         }
 
-        public override string DbTypeFromCLRType(Type clrType)
+        public override DbCommand GetDropTableCommand()
         {
             throw new NotImplementedException();
         }
 
+        public override string DbTypeFromCLRType(Type clrType)
+        {
+            throw new NotImplementedException();
+        }
 
         public override DbConnection GetNewConnection(string connectionString)
         {
@@ -107,7 +112,5 @@ namespace EntityOH.Controllers
         {
             return new OleDbCommandsMaker<AnyEntity>(new EntityRuntime<AnyEntity>());
         }
-
-       
     }
 }

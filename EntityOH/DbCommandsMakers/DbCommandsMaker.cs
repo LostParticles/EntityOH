@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data.Common;
+using EntityOH.Controllers;
+using EntityOH.Schema;
 
-namespace EntityOH.Controllers
+namespace EntityOH.DbCommandsMakers
 {
     /// <summary>
     /// Base class for all DbCommandsMakers  
@@ -47,7 +49,10 @@ namespace EntityOH.Controllers
         abstract public DbCommand GetDeleteCommand();
         abstract public DbCommand GetUpdateCommand();
         abstract public DbCommand GetStoredProcedureCommand(string procName);
+
+
         abstract public DbCommand GetCreateTableCommand();
+        abstract public DbCommand GetDropTableCommand();
 
         abstract public string DbTypeFromCLRType(Type clrType);
 
@@ -62,5 +67,6 @@ namespace EntityOH.Controllers
         public abstract DbCommand GetNewCommand();
 
         public abstract DbCommandsMaker<AnyEntity> GetThisMaker<AnyEntity>();
+
     }
 }

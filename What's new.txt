@@ -1,10 +1,54 @@
+[Version 0.6]
+- Refactored the inner code to have DbCommandsMaker that should be inherited and implemented
+    foreach provider lies under System.Data.[Provider]
+	(this maker knows itself from being registerd during runtime with the specified Provider name in the <add> connection in configuration file.
+
+- fast access to the schema of the database Tables with columns
+    (tested for sql server , compact, and ole db databases)
+
+- ole databases includes new and old office applications excel, and access.
+	(fun fact: the provider for oledatabases is System.Data.OleDb)
+	however there is another provider in the connectionString itself that specify the target of the file being opened 
+	if access or excel and if new or old formats
+	like 
+	- "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=..."
+	- "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=..."
+
+
+- Drop Table statement in DbProbe. has been added.
+
+- What's Next :
+	* Making separate commands maker in separate projects (aka dlls)
+		 for SqliteCommandsMaker, and MySqlCommandsMaker.
+	* Implementing new idea of writing to/ reading from .. multiple databases in the same time with one call 
+		may be we can invent new provider 
+		System.Data.MirroredData
+		and in connection string it becomes
+		<add  name="mymirror" provider="System.Data.MirroredData" connectionstring="Keys= sqlserver1,sqlserver2, mysqlA, ..., etc;" />
+
+		this way we can store the data in multiple locations.
+
+        also in reading we can get the data that were fetched faster than others.
+		(its a lot of problems of this module but needs good thinking)
+				
+
+			
+
+
+
+
+
+
+
+[Previous Versions]
 - Refactoring the code to accept the Sql Server Compact database 4
 
 
 
-
+[Previous Versions]
 - Fixed the update method when the entity has more than one primary field
 
+[Previous Versions]
 * 2011-3-27
 
 - Adding DbPrope  for fast access to the database data.

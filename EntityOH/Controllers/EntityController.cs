@@ -11,6 +11,7 @@ using EntityOH.Controllers.Connections;
 
 using System.Data.Common;
 using System.Diagnostics;
+using EntityOH.DbCommandsMakers;
 
 
 namespace EntityOH.Controllers
@@ -938,6 +939,17 @@ namespace EntityOH.Controllers
             string fld = DatabaseCommands.EntityRuntimeInformation.RunningPhysicalName + EntityRuntime<Entity>.AliasSeparator + fieldName;
 
             return fld;
+        }
+
+        public void DropTable()
+        {
+            ExecutePreOperations();
+            using (DbCommand command = DatabaseCommands.GetDropTableCommand())
+            {
+                _LastSqlStatement = command.CommandText;
+                _Connection.ExecuteNonQuery(command);
+            }
+            _Connection.CloseConnection();            
         }
     }
 }
