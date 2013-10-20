@@ -5,6 +5,8 @@ using System.Text;
 using System.Data;
 using System.Configuration;
 using System.Data.Common;
+using EntityOH.Schema;
+using EntityOH.DbCommandsMakers;
 
 namespace EntityOH.Controllers.Connections
 {
@@ -210,13 +212,11 @@ namespace EntityOH.Controllers.Connections
         /// <returns></returns>
         public int ExecuteNonQueryWithoutClose(DbCommand command)
         {
-
             command.Connection = _InternalConnection;
 
             int returnvalue = command.ExecuteNonQuery();
 
             return returnvalue;
-
         }
 
         public int ExecuteNonQuery(DbCommand command)
@@ -240,13 +240,10 @@ namespace EntityOH.Controllers.Connections
         /// <returns></returns>
         internal DbCommand GetExecuteCommand(string sql)
         {
-
             var cmd = DbCommandsFactory.GetCommand(Provider);
             cmd.CommandText = sql;
             return cmd;
-
         }
-
 
 
         #region Tools
@@ -269,6 +266,49 @@ namespace EntityOH.Controllers.Connections
             var cmd = this.GetExecuteCommand(sql);
 
             return this.ExecuteNonQuery(cmd);
+        }
+
+
+        /// <summary>
+        /// Execute the sql statement and returns datatable.
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <returns></returns>
+        public DataTable ExecuteDataTable(string sql)
+        {
+            OpenConnection();
+
+            DataTable data = new DataTable();
+
+            try
+            {
+                using (var reader = ExecuteReader(sql))
+                {
+                    // add fields names
+                    for (int ix = 0; ix < reader.FieldCount; ix++)
+                    {
+                        data.Columns.Add(reader.GetName(ix), reader.GetFieldType(ix));
+                    }
+
+                    while (reader.Read())
+                    {
+                        var row = data.NewRow();
+                        for (int ix = 0; ix < reader.FieldCount; ix++)
+                        {
+                            row[ix] = reader.GetValue(ix);
+                        }
+
+                        data.Rows.Add(row);
+                    }
+                    reader.Close();
+                }
+            }
+            finally
+            {                
+                CloseConnection();
+            }
+
+            return data;
         }
 
         /// <summary>
@@ -295,6 +335,73 @@ namespace EntityOH.Controllers.Connections
         #endregion
 
 
+        public ICollection<TableInformation> GetTablesInformation()
+        {
+            DataTable dt;
 
+            if (Provider.EndsWith("OLEDB", StringComparison.OrdinalIgnoreCase))
+            {
+                OpenConnection();
+
+                var ole_connection = (System.Data.OleDb.OleDbConnection)_InternalConnection;
+
+                //dt = ole_connection.GetOleDbSchemaTable(System.Data.OleDb.OleDbSchemaGuid.Tables, new object[] { null, null, null, "TABLE" });
+
+                dt = _InternalConnection.GetSchema("Tables", new string[] { null, null, null, "TABLE" });
+
+                CloseConnection();
+            }
+            else
+            {
+                dt = ExecuteDataTable("SELECT * FROM INFORMATION_SCHEMA.TABLES");
+            }
+            
+            List<TableInformation> Tables = new List<TableInformation>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                for (int i = 0; i < dt.Columns.Count; i++)
+                {
+                    values.Add(dt.Columns[i].ColumnName, row[i].ToString());
+                }
+
+                Tables.Add(new TableInformation(values));
+            }
+
+            foreach (var tbl in Tables)
+            {
+                DataTable dcs;
+                if (Provider.EndsWith("OLEDB", StringComparison.OrdinalIgnoreCase))
+                {
+                    OpenConnection();
+                    dcs = _InternalConnection.GetSchema("Columns", new string[] { null, null,  tbl.Name });
+                    CloseConnection();
+                }
+                else
+                {
+                    dcs = ExecuteDataTable("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" + tbl.Name + "'");
+                }
+                List<ColumnInformation> columns = new List<ColumnInformation>();
+                foreach (DataRow row in dcs.Rows)
+                {
+                    Dictionary<string, string> c_values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                    for (int i = 0; i < dcs.Columns.Count; i++)
+                    {
+                        c_values.Add(dcs.Columns[i].ColumnName, row[i].ToString());
+                    }
+
+                    columns.Add(new ColumnInformation(c_values));
+
+                }
+
+                tbl.Columns = columns;
+            }
+
+            return Tables;
+            
+        }
     }
 }

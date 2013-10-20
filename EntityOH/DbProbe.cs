@@ -6,6 +6,7 @@ using System.Data;
 using EntityOH.Controllers.Connections;
 using System.Text.RegularExpressions;
 using EntityOH.Controllers;
+using EntityOH.Schema;
 
 namespace EntityOH
 {
@@ -30,6 +31,11 @@ namespace EntityOH
         }
 
 
+        private DbProbe(string connectionString, string provider)
+        {
+            _UnderlyingConnection = new SmartConnection(connectionString, provider);
+        }
+
         public static DbProbe Db()
         {
             DbProbe dbp = new DbProbe(SmartConnection.GetSmartConnection());
@@ -47,7 +53,11 @@ namespace EntityOH
             return dbp;
         }
 
-        
+        public static DbProbe Db(string connectionString, string provider)
+        {
+            DbProbe dbp = new DbProbe(connectionString, provider);
+            return dbp;
+        }
 
         
         /// <summary>
@@ -80,43 +90,9 @@ namespace EntityOH
                 if (!string.IsNullOrEmpty(where))
                     sql += " WHERE " + where;
 
-
-                _UnderlyingConnection.OpenConnection();
-
-
-
                 LastSqlStatement = sql;
 
-                DataTable data = new DataTable();
-
-                try
-                {
-                    using (var reader = _UnderlyingConnection.ExecuteReader(sql))
-                    {
-                        // add fields names
-                        for (int ix = 0; ix < reader.FieldCount; ix++)
-                        {
-                            data.Columns.Add(reader.GetName(ix), reader.GetFieldType(ix));                            
-                        }
-
-                        while (reader.Read())
-                        {
-
-                            var row = data.NewRow();
-                            for (int ix = 0; ix < reader.FieldCount; ix++)
-                            {
-                                row[ix] = reader.GetValue(ix);
-                            }
-
-                            data.Rows.Add(row);
-                        }
-                        reader.Close();
-                    }
-                }
-                finally
-                {
-                    _UnderlyingConnection.CloseConnection();
-                }
+                var data = _UnderlyingConnection.ExecuteDataTable(sql);
                 
                 return data;
             }
@@ -285,37 +261,7 @@ namespace EntityOH
         {
             LastSqlStatement = sql;
 
-            _UnderlyingConnection.OpenConnection();
-
-            DataTable data = new DataTable();
-
-            try
-            {
-                using (var reader = _UnderlyingConnection.ExecuteReader(sql))
-                {
-                    // add fields names
-                    for (int ix = 0; ix < reader.FieldCount; ix++)
-                    {
-                        data.Columns.Add(reader.GetName(ix), reader.GetFieldType(ix));
-                    }
-
-                    while (reader.Read())
-                    {
-                        var row = data.NewRow();
-                        for (int ix = 0; ix < reader.FieldCount; ix++)
-                        {
-                            row[ix] = reader.GetValue(ix);
-                        }
-
-                        data.Rows.Add(row);
-                    }
-                    reader.Close();
-                }
-            }
-            finally
-            {
-                _UnderlyingConnection.CloseConnection();
-            }
+            var data = _UnderlyingConnection.ExecuteDataTable(sql);
 
             return data;
         }
@@ -436,6 +382,20 @@ namespace EntityOH
         public void Dispose()
         {
             _UnderlyingConnection.Dispose();
+        }
+
+        public void DropTable<Entity>()
+        {
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            ee.DropTable();
+        }
+
+        public ICollection<TableInformation> Tables
+        {
+            get
+            {
+                return _UnderlyingConnection.GetTablesInformation();
+            }
         }
     }
 }

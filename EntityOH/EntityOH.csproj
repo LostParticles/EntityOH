@@ -77,7 +77,7 @@
   <ItemGroup>
     <Compile Include="Attributes\EntityAttribute.cs" />
     <Compile Include="Controllers\ControllerOptions.cs" />
-    <Compile Include="Controllers\DbCommandsFactory.cs" />
+    <Compile Include="DbCommandsMakers\DbCommandsFactory.cs" />
     <Compile Include="Controllers\EntityController_DbCommands.cs" />
     <Compile Include="Controllers\EntityController_DDL.cs" />
     <Compile Include="Controllers\EntityController_EntityChildren.cs" />
@@ -85,16 +85,19 @@
     <Compile Include="Controllers\EntityFieldRuntime.cs" />
     <Compile Include="Controllers\EntityRuntime.cs" />
     <Compile Include="Controllers\EntityRuntimeHelper.cs" />
-    <Compile Include="Controllers\DbCommandsMaker.cs" />
+    <Compile Include="DbCommandsMakers\DbCommandsMaker.cs" />
     <Compile Include="Controllers\SmartReader.cs" />
-    <Compile Include="Controllers\SqlServerCompactCommandsMaker.cs" />
-    <Compile Include="Controllers\SqlServerCommandsMaker.cs" />
+    <Compile Include="DbCommandsMakers\SqlServerCompactCommandsMaker.cs" />
+    <Compile Include="DbCommandsMakers\SqlServerCommandsMaker.cs" />
     <Compile Include="DbProbe.cs" />
-    <Compile Include="Controllers\OleDbCommandsMaker.cs" />
+    <Compile Include="DbCommandsMakers\OleDbCommandsMaker.cs" />
     <Compile Include="EmptyEntity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Controllers\Connections\SmartConnection.cs" />
     <Compile Include="EntityException.cs" />
+    <Compile Include="Schema\ColumnInformation.cs" />
+    <Compile Include="Schema\TableInformation.cs" />
+    <Compile Include="Schema\TableType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="EntityOH.snk" />

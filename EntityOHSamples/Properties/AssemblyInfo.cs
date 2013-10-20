@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Entity Hydroxide")]
-[assembly: AssemblyDescription("Database ORM Mapping Library")]
+[assembly: AssemblyTitle("EntityOHSamples")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Lost Particles Network")]
-[assembly: AssemblyProduct("Entity Hydroxide")]
-[assembly: AssemblyCopyright("Copyright © 2010-2013 by Ahmed Sadek")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("EntityOHSamples")]
+[assembly: AssemblyCopyright("Copyright ©  2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("5b2fca8a-b65f-4f8f-8eaf-8e72cbca9a5b")]
+[assembly: Guid("7e1b7af3-9040-4e1d-9693-6a737781e463")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.6.0.0")]
-[assembly: AssemblyFileVersion("0.6.0.0")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

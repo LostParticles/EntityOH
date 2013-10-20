@@ -29,10 +29,5 @@ namespace EntityOH.Controllers
             _LastSqlStatement = cmd.CommandText;
             _Connection.ExecuteNonQuery(cmd);
         }
-
     }
-
-
-
-
 }
