@@ -252,7 +252,9 @@ namespace EntityOH.Controllers.Connections
         public object ExecuteScalar(string sql)
         {
             DbCommand cmd = DbCommandsFactory.GetCommand(Provider);
+            cmd.CommandText = sql;
 
+            
             return ExecuteScalar(cmd);
         }
 
