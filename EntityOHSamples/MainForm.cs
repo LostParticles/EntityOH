@@ -40,5 +40,22 @@ namespace EntityOHSamples
 
             
         }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            // connect to sql server 
+
+            using (DbProbe db = DbProbe.Db("Server=localhost;Database=Distracted;Trusted_Connection=True;", "System.Data.SqlClient"))
+            {
+
+
+                db.CreateTable<Person>();
+                
+                
+
+                dataGridView1.DataSource = db.Select<Person>(textBox1.Text);
+
+            }
+        }
     }
 }

@@ -12,6 +12,7 @@ using EntityOH.Controllers.Connections;
 using System.Data.Common;
 using System.Diagnostics;
 using EntityOH.DbCommandsMakers;
+using System.Text.RegularExpressions;
 
 
 namespace EntityOH.Controllers
@@ -314,6 +315,144 @@ namespace EntityOH.Controllers
 
 
         /// <summary>
+        /// Raise exception if it founds semicolon in the where text :)
+        /// </summary>
+        /// <param name="where"></param>
+        /// <returns></returns>
+        public string CheckWhere(string where)
+        {
+            if (where.Contains(';'))
+            {
+                throw new EntityException("Semicolon character is not permitted in raw WHERE statements to avoid sql injection.\nTry using parameterized WHERE instead");
+            }
+
+            if (where.Contains('\''))
+            {
+                throw new EntityException("for sequrity reasons, single qoutation cannot be used in the raw WHERE statement to avoid sql injection.\nTry using parameterized WHERE instead");
+            }
+
+            if (where.Contains("--"))
+            {
+                throw new EntityException("double dash [--] is not permitted in the where statement to avoid sql injection\nTry using parameterized WHERE instead");
+            }
+
+            if (where.Contains("#"))
+            {
+                throw new EntityException("hash [#] is not permitted in the where statement to avoid sql injection\nTry using parameterized WHERE instead");
+            }
+
+            string[] ProhibitedKeywords = 
+            {
+                "DROP"
+                , "INSERT"
+                // , "SELECT"
+                , "DELETE"
+                , "TRUNCATE"
+                , "ALTER"
+                , "CREATE"
+                , "UPDATE"
+                , "ENABLE"
+                , "DISABLE"
+                , "COMMENT"
+                , "RENAME"
+                , "MERGE"
+                , "CALL"
+                , "EXPLAIN"
+                , "LOCK"
+                , "GRANT"
+                , "REVOKE"
+                , "COMMIT"
+                , "SAVEPOINT"
+                , "ROLLBACK"
+                , "SET"
+                , "EXEC"
+                , "EXECUTE"
+            };
+
+            bool cc = false;
+            
+            foreach(var pro in ProhibitedKeywords)
+            {
+                cc = cc || Regex.Match(where, @"\s+" + pro + @"\s+", RegexOptions.IgnoreCase).Success;
+            }
+
+
+
+            if (cc)
+                throw new EntityException(
+                    "certain sql keywords are prohibited when written in raw [WHERE] statement to avoid sql injection\nTry using parameterized WHERE instead\nVulnerable Where Statement := \"" 
+                    + where
+                    + "\"");
+
+
+            return where;
+        }
+
+        /// <summary>
+        /// Incorporating parameters in the where statement ..
+        /// this function must be used to avoid sql injection, specially when the codition is taken from the user interface.
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        public ICollection<Entity> SelectParametrized(string whereClause, params CommandParameter[] parameters)
+        {
+
+            ExecutePreOperations();
+
+            string SelectAllStatement = "SELECT {0} FROM {1}";
+
+            string SelectAll = string.Format(SelectAllStatement, FieldsList, FromExpression);
+
+            if (!string.IsNullOrEmpty(GroupByExpression))
+                SelectAll += " GROUP BY " + GroupByExpression;
+
+
+            _LastSqlStatement = SelectAll;
+
+            List<Entity> ets = new List<Entity>();
+
+            var SelectCommand = _Connection.GetCommand();
+
+            if (!string.IsNullOrEmpty(whereClause))
+            {
+                if (parameters.Length > 0)
+                {
+                    // add parameter values to the statement
+                    foreach (var par in parameters)
+                    {
+                        SelectCommand.Parameters.Add(DatabaseCommands.GetParameter(par.Name, par.Value));
+                    }
+                    SelectAll += " WHERE " + whereClause;
+                }
+                else
+                {
+                    SelectAll += " WHERE " + CheckWhere(whereClause);
+                }
+            }
+
+
+            SelectCommand.CommandText = SelectAll;
+
+
+            using (var reader = SelectCommand.ExecuteReader())
+            {
+
+                while (reader.Read())
+                {
+                    ets.Add(EntityRuntime<Entity>.MappingFunction(reader));
+                }
+
+                reader.Close();
+            }
+
+            SelectCommand.Dispose();
+
+            _Connection.CloseConnection();
+            return ets;
+        }
+
+        /// <summary>
         /// Select based on where condition.
         /// </summary>
         /// <param name="whereClause"></param>
@@ -330,15 +469,20 @@ namespace EntityOH.Controllers
             if (!string.IsNullOrEmpty(GroupByExpression))
                 SelectAll += " GROUP BY " + GroupByExpression;
 
-            if (!string.IsNullOrEmpty(whereClause))
-                SelectAll += " WHERE " + whereClause;
-
 
             _LastSqlStatement = SelectAll;
+
             List<Entity> ets = new List<Entity>();
 
+            var SelectCommand = _Connection.GetCommand();
 
-            using (var reader = _Connection.ExecuteReader(SelectAll))
+            if (!string.IsNullOrEmpty(whereClause))
+            {
+                SelectAll += " WHERE " + CheckWhere(whereClause);
+            }
+            
+            SelectCommand.CommandText = SelectAll;
+            using (var reader = SelectCommand.ExecuteReader())
             {
 
                 while (reader.Read())
@@ -348,7 +492,8 @@ namespace EntityOH.Controllers
 
                 reader.Close();
             }
-            
+
+            SelectCommand.Dispose();
 
             _Connection.CloseConnection();
             return ets;

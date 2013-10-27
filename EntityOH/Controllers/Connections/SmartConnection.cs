@@ -181,6 +181,16 @@ namespace EntityOH.Controllers.Connections
 
         }
 
+        /// <summary>
+        /// Gets a command related to the current provider.
+        /// </summary>
+        /// <returns></returns>
+        public DbCommand GetCommand()
+        {
+            var r = DbCommandsFactory.GetCommand(Provider);
+            r.Connection = _InternalConnection;
+            return r;
+        }
 
         public IDataReader ExecuteReader(string text)
         {
