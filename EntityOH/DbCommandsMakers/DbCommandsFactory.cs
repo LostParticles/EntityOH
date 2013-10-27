@@ -17,6 +17,8 @@ namespace EntityOH.DbCommandsMakers
             DbCommandsProviders.Add("System.Data.SqlClient", typeof(SqlServerCommandsMaker<>));
             DbCommandsProviders.Add("System.Data.OleDb", typeof(OleDbCommandsMaker<>));
             DbCommandsProviders.Add("System.Data.SqlServerCe", typeof(SqlServerCompactCommandsMaker<>));
+
+            // find classes that holds specific attribute
         }
 
 

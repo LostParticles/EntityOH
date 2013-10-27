@@ -7,6 +7,7 @@ using EntityOH.Controllers.Connections;
 using System.Text.RegularExpressions;
 using EntityOH.Controllers;
 using EntityOH.Schema;
+using EntityOH.DbCommandsMakers;
 
 namespace EntityOH
 {
@@ -98,6 +99,25 @@ namespace EntityOH
             }
         }
 
+        public ICollection<Entity> SelectParametrized<Entity>(string where, params CommandParameter[] parameters)
+        {
+            ICollection<Entity> all = null;
+
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
+            {
+                if (string.IsNullOrEmpty(where))
+                    throw new EntityException("Where statement must be feeded for this function");
+                else
+                    all = ee.SelectParametrized(where, parameters );
+            }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
+            }
+
+            return all;
+        }
 
 
         /// <summary>
