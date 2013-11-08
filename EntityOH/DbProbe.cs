@@ -99,7 +99,7 @@ namespace EntityOH
             }
         }
 
-        public ICollection<Entity> SelectParametrized<Entity>(string where, params CommandParameter[] parameters)
+        public ICollection<Entity> SelectParameterized<Entity>(string where, params CommandParameter[] parameters)
         {
             ICollection<Entity> all = null;
 
@@ -109,7 +109,7 @@ namespace EntityOH
                 if (string.IsNullOrEmpty(where))
                     throw new EntityException("Where statement must be feeded for this function");
                 else
-                    all = ee.SelectParametrized(where, parameters );
+                    all = ee.SelectParameterized(where, parameters );
             }
             finally
             {

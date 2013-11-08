@@ -395,7 +395,7 @@ namespace EntityOH.Controllers
         /// <param name="whereClause"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        public ICollection<Entity> SelectParametrized(string whereClause, params CommandParameter[] parameters)
+        public ICollection<Entity> SelectParameterized(string whereClause, params CommandParameter[] parameters)
         {
 
             ExecutePreOperations();
