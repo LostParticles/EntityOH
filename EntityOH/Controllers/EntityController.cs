@@ -452,6 +452,39 @@ namespace EntityOH.Controllers
             return ets;
         }
 
+
+        /// <summary>
+        /// Execute any sql statement and try to map the result into the Entity type.
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <returns></returns>
+        public ICollection<Entity> ExecuteEntities(string sql)
+        {
+            ExecutePreOperations();
+            _LastSqlStatement = sql;
+            List<Entity> ets = new List<Entity>();
+
+            var SelectCommand = _Connection.GetCommand();
+            SelectCommand.CommandText = sql;
+            using (var reader = SelectCommand.ExecuteReader())
+            {
+
+                while (reader.Read())
+                {
+                    ets.Add(EntityRuntime<Entity>.BareMappingFunction(reader));
+                }
+
+                reader.Close();
+            }
+
+            SelectCommand.Dispose();
+
+            _Connection.CloseConnection();
+            return ets;
+
+        }
+
+
         /// <summary>
         /// Select based on where condition.
         /// </summary>

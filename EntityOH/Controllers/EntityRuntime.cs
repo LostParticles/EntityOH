@@ -187,11 +187,18 @@ namespace EntityOH.Controllers
         public static bool Inherited { get; private set; }
 
         public static LambdaExpression MappingExpression { get; private set; }
+        public static LambdaExpression BareMappingExpression { get; private set; }
 
         /// <summary>
         /// Mapping between data reader and the whole entity public writable properties.
         /// </summary>
         public static Func<IDataReader, Entity> MappingFunction { get; private set; }
+
+        /// <summary>
+        /// Mapping between data reader and the whole entity public properties without fields decoration from the database
+        /// </summary>
+        public static Func<IDataReader, Entity> BareMappingFunction { get; private set; }
+
 
         public static LambdaExpression PartialMappingExpression { get; private set; }
         public static Func<SmartReader, Entity> PartialMappingFunction { get; private set; }
@@ -223,7 +230,10 @@ namespace EntityOH.Controllers
 
             var NewEntity = Expression.New(EntityType);
 
-            List<MemberBinding> bindings = new List<MemberBinding>();
+            List<MemberBinding> Bindings = new List<MemberBinding>();
+            
+            List<MemberBinding> BareBindings = new List<MemberBinding>();
+
 
             MethodInfo GetOrdinalInfo = IDataRecordType.GetMethod("GetOrdinal");
             MethodInfo GetValueInfo = IDataRecordType.GetMethod("GetValue");
@@ -235,8 +245,12 @@ namespace EntityOH.Controllers
                 //  int IDataReader.GetOrdinal(string pp.Name)
                 var ReaderOrdinal = Expression.Call(RecordParameterExpression, GetOrdinalInfo, Expression.Constant(EntityType.Name + AliasSeparator + fr.Value.FieldPropertyInfo.Name)); //selecting inside reader with the property name because we are renaming the return columns with the names of the entity properties.
 
+
                 // object IDataReader.GetObject(int ordinal )
                 var RecordValue = Expression.Call(RecordParameterExpression, GetValueInfo, ReaderOrdinal);
+                
+                var BareReaderOrdinal = Expression.Call(RecordParameterExpression, GetOrdinalInfo, Expression.Constant(fr.Value.FieldPropertyInfo.Name)); //selecting inside reader with the property name only.
+                var BareRecordValue = Expression.Call(RecordParameterExpression, GetValueInfo, BareReaderOrdinal);
 
                 //check if the type of the field is foriegn field.
                 if (fr.Value.Foriegn)
@@ -275,7 +289,7 @@ namespace EntityOH.Controllers
 
                     var binding = Expression.Bind(fr.Value.FieldPropertyInfo, Ref);
 
-                    bindings.Add(binding);
+                    Bindings.Add(binding);
                     #endregion
                 }
                 else
@@ -298,8 +312,21 @@ namespace EntityOH.Controllers
                         // bind this value to the initial assigning list.
                         var binding = Expression.Bind(fr.Value.FieldPropertyInfo, ToBeOrNotToBe);
 
-                        bindings.Add(binding);
+                        Bindings.Add(binding);
 
+                        #region Bare Binding
+
+                        var BareValue = Expression.Convert(BareRecordValue, fr.Value.FieldType);
+
+                        var bare_ToBeOrNotToBe = Expression.Condition(
+                            Expression.Call(RecordParameterExpression, IsDBNullInfo, BareReaderOrdinal)
+                            , Expression.Constant(null, fr.Value.FieldType), BareValue);
+
+                        var bare_binding = Expression.Bind(fr.Value.FieldPropertyInfo, bare_ToBeOrNotToBe);
+
+                        BareBindings.Add(bare_binding);
+
+                        #endregion
                     }
                     else if (fr.Value.FieldType.IsClass)
                     {
@@ -313,7 +340,19 @@ namespace EntityOH.Controllers
                         // bind this value to the initial assigning list.
                         var binding = Expression.Bind(fr.Value.FieldPropertyInfo, ToBeOrNotToBe);
 
-                        bindings.Add(binding);
+                        Bindings.Add(binding);
+
+                        #region Bare Binding
+                        var BareValue = Expression.Convert(BareRecordValue, fr.Value.FieldType);
+
+                        var BareIsValueNull = Expression.Call(RecordParameterExpression, IsDBNullInfo, BareReaderOrdinal);
+                        var bare_ToBeOrNotToBe = fr.Value.FieldType == typeof(string) ? Expression.Condition(BareIsValueNull, Expression.Constant(string.Empty, typeof(string)), BareValue) : Expression.Condition(BareIsValueNull, Expression.Constant(null, fr.Value.FieldType), BareValue);
+
+                        var bare_binding = Expression.Bind(fr.Value.FieldPropertyInfo, bare_ToBeOrNotToBe);
+
+                        BareBindings.Add(bare_binding);
+
+                        #endregion
                     }
                     else
                     {
@@ -326,7 +365,14 @@ namespace EntityOH.Controllers
                         // bind this value to the initial assigning list.
                         var binding = Expression.Bind(fr.Value.FieldPropertyInfo, Value);
 
-                        bindings.Add(binding);
+                        Bindings.Add(binding);
+
+                        #region Bare Binding
+
+                        var bare_binding = Expression.Bind(fr.Value.FieldPropertyInfo, Expression.Convert(BareRecordValue, fr.Value.FieldType));
+                        BareBindings.Add(bare_binding);
+
+                        #endregion
                     }
                     #endregion
                 }
@@ -334,7 +380,7 @@ namespace EntityOH.Controllers
 
             // initialize the object expression.  
             // this is the same like  var p = new Point(){x=3,y=5};
-            Expression initializer = Expression.MemberInit(NewEntity, bindings.ToArray());
+            Expression initializer = Expression.MemberInit(NewEntity, Bindings.ToArray());
 
             // Make the lambda expression
             MappingExpression = Expression.Lambda<Func<IDataReader, Entity>>(initializer, RecordParameterExpression);
@@ -342,6 +388,13 @@ namespace EntityOH.Controllers
             // compile the lambda expression into function to be called as var entity = MappingFunction(reader)
             MappingFunction = (Func<IDataReader, Entity>)MappingExpression.Compile();
 
+
+
+            #region Bare Mapping Function  without fields decoration
+            Expression bare_initializer = Expression.MemberInit(NewEntity, BareBindings.ToArray());
+            BareMappingExpression = Expression.Lambda<Func<IDataReader, Entity>>(bare_initializer, RecordParameterExpression);
+            BareMappingFunction = (Func<IDataReader, Entity>)BareMappingExpression.Compile();
+            #endregion
 
 
 
@@ -352,7 +405,7 @@ namespace EntityOH.Controllers
 
             RecordParameterExpression = Expression.Parameter(SmartReaderType, "reader");
 
-            bindings = new List<MemberBinding>();
+            Bindings = new List<MemberBinding>();
 
             // search for every field in DataRecord and return its value in initializer then compile all of this.
             foreach (var fr in FieldsRuntime)
@@ -365,10 +418,10 @@ namespace EntityOH.Controllers
 
                 var binding = Expression.Bind(fr.Value.FieldPropertyInfo, Value);
 
-                bindings.Add(binding);
+                Bindings.Add(binding);
             }
 
-            initializer = Expression.MemberInit(NewEntity, bindings.ToArray());
+            initializer = Expression.MemberInit(NewEntity, Bindings.ToArray());
 
             PartialMappingExpression = Expression.Lambda<Func<SmartReader, Entity>>(initializer, RecordParameterExpression);
 
@@ -379,6 +432,8 @@ namespace EntityOH.Controllers
 
         }
         
+
+
         static EntityRuntime()
         {
             ConstructTheMappingFunction();
