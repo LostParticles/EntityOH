@@ -119,6 +119,29 @@ namespace EntityOH
             return all;
         }
 
+        /// <summary>
+        /// Execute the query and try to map the result to the entity public properties .. direclty without name decoration on the database server side.
+        /// </summary>
+        /// <typeparam name="Entity"></typeparam>
+        /// <param name="sql"></param>
+        /// <returns></returns>
+        public ICollection<Entity> ExecuteEntities<Entity>(string sql)
+        {
+            ICollection<Entity> all = null;
+
+            var ee = new EntityController<Entity>(_UnderlyingConnection);
+            try
+            {
+                all = ee.ExecuteEntities(sql);
+            }
+            finally
+            {
+                LastSqlStatement = ee.LastSqlStatement;
+            }
+
+            return all;
+
+        }
 
         /// <summary>
         /// Select entities from the database directly.
@@ -339,12 +362,12 @@ namespace EntityOH
 
 
         /// <summary>
-        /// Execute the sql and return array of the type.
+        /// Execute the sql and return single array vector of the type.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="sql"></param>
         /// <returns></returns>
-        public ICollection<T> ExecuteArray<T>(string sql)
+        public ICollection<T> ExecuteVector<T>(string sql)
         {
             LastSqlStatement = sql;
 
@@ -371,6 +394,7 @@ namespace EntityOH
             return data;
         }
 
+       
 
 
         public void Delete<Entity>(Entity entity)
