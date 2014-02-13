@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl><![CDATA[https://entityoh.codeplex.com/]]></licenseUrl>
+    <projectUrl><![CDATA[https://entityoh.codeplex.com/license]]></projectUrl>
+    <iconUrl><![CDATA[https://download-codeplex.sec.s-msft.com/Download?ProjectName=entityoh&DownloadId=794515&Build=20865]]></iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>Including the package into nuget</releaseNotes>
+    <copyright>Copyright 2010-2014</copyright>
+    <tags>ORM</tags>
+  </metadata>
+</package>

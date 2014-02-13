@@ -101,6 +101,7 @@
     <Compile Include="Schema\TableType.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="EntityOH.nuspec" />
     <None Include="EntityOH.snk" />
   </ItemGroup>
   <ItemGroup>
