@@ -1,3 +1,12 @@
+[Version 0.7]
+- Changed the architecture now the library searches for *.EntityOH.dll to find
+    the types that is inherited from DbCommandsMaker<Entity>
+	and then load it as per mentioned in the providerName in the connection string
+
+- Separated the logic of compact sql server into separate library .. so that we don't put much code in the original library
+- implemented postgres  commands maker  to support postgres databases.
+
+
 [Version 0.6]
 - Refactored the inner code to have DbCommandsMaker that should be inherited and implemented
     foreach provider lies under System.Data.[Provider]

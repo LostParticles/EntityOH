@@ -26,15 +26,31 @@ namespace EntityOH.Schema
             }
         }
 
+
+        /// <summary>
+        /// Table/View Type coming from the database
+        /// </summary>
+        public string DBType
+        {
+            get
+            {
+                return Values["TABLE_TYPE"];
+            }
+        }
+
+        /// <summary>
+        /// Mapped table type from the library
+        /// </summary>
         public TableType Type
         {
             get
             {
-                if (Values["TABLE_TYPE"].Contains("TABLE")) return TableType.Table;
-                if (Values["TABLE_TYPE"].Contains("View")) return TableType.View;
+                if (DBType.ToUpperInvariant().Contains("TABLE")) return TableType.Table;
+                if (DBType.ToUpperInvariant().Contains("VIEW")) return TableType.View;
                 return TableType.Unknown;
             }
         }
+
 
         public string this[string key]
         {

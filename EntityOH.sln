@@ -1,12 +1,15 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityOH", "EntityOH\EntityOH.csproj", "{0BDF3658-B011-4EF6-ACB9-0AA578563106}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5C30FB3D-ECBB-4F54-9850-49BC9F8CD7CB}"
 	ProjectSection(SolutionItems) = preProject
 		EntityOH.vsmdi = EntityOH.vsmdi
 		Local.testsettings = Local.testsettings
+		PlugIns.txt = PlugIns.txt
 		Requirements.txt = Requirements.txt
 		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
 		What's new.txt = What's new.txt
@@ -16,25 +19,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityOHTest", "EntityOHTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityOHSamples", "EntityOHSamples\EntityOHSamples.csproj", "{0ACDC0C5-C9C2-4893-B69F-B318A137B451}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestProjects", "TestProjects", "{95AE794E-DD3C-4429-8514-A7AD53C096AB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{9C7B494E-F69E-4855-8BA3-EBD40D2C14E6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CommandsMakersProviders", "CommandsMakersProviders", "{199E4A4F-2CC4-40F2-8DE0-9399BF2EC86A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlServerCe.EntityOH", "SqlServerCe.EntityOH\SqlServerCe.EntityOH.csproj", "{121F0504-27A0-4E7D-BEED-D470053EFF85}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Postgres.EntityOH", "Postgres.EntityOH\Postgres.EntityOH.csproj", "{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}"
+EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 4
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs02
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = EntityOH\\EntityOH.csproj
-		SccProjectName1 = EntityOH
-		SccLocalPath1 = EntityOH
-		SccProjectUniqueName2 = EntityOHTest\\EntityOHTest.csproj
-		SccProjectName2 = EntityOHTest
-		SccLocalPath2 = EntityOHTest
-		SccProjectUniqueName3 = EntityOHSamples\\EntityOHSamples.csproj
-		SccProjectName3 = EntityOHSamples
-		SccLocalPath3 = EntityOHSamples
-	EndGlobalSection
-	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = EntityOH.vsmdi
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -74,8 +69,37 @@ Global
 		{0ACDC0C5-C9C2-4893-B69F-B318A137B451}.Release|Mixed Platforms.Build.0 = Release|x86
 		{0ACDC0C5-C9C2-4893-B69F-B318A137B451}.Release|x86.ActiveCfg = Release|x86
 		{0ACDC0C5-C9C2-4893-B69F-B318A137B451}.Release|x86.Build.0 = Release|x86
+		{121F0504-27A0-4E7D-BEED-D470053EFF85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{121F0504-27A0-4E7D-BEED-D470053EFF85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{121F0504-27A0-4E7D-BEED-D470053EFF85}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{121F0504-27A0-4E7D-BEED-D470053EFF85}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{121F0504-27A0-4E7D-BEED-D470053EFF85}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{121F0504-27A0-4E7D-BEED-D470053EFF85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{121F0504-27A0-4E7D-BEED-D470053EFF85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{121F0504-27A0-4E7D-BEED-D470053EFF85}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{121F0504-27A0-4E7D-BEED-D470053EFF85}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{121F0504-27A0-4E7D-BEED-D470053EFF85}.Release|x86.ActiveCfg = Release|Any CPU
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{317CAD77-7978-4B7E-95F3-A0D52A5C3FF6} = {95AE794E-DD3C-4429-8514-A7AD53C096AB}
+		{0ACDC0C5-C9C2-4893-B69F-B318A137B451} = {9C7B494E-F69E-4855-8BA3-EBD40D2C14E6}
+		{121F0504-27A0-4E7D-BEED-D470053EFF85} = {199E4A4F-2CC4-40F2-8DE0-9399BF2EC86A}
+		{48D99AC9-229B-4B8B-9FA3-0466CAD19D93} = {199E4A4F-2CC4-40F2-8DE0-9399BF2EC86A}
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = EntityOH.vsmdi
 	EndGlobalSection
 EndGlobal

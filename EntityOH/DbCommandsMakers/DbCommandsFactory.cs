@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data.Common;
+using System.Reflection;
+using System.IO;
 
 namespace EntityOH.DbCommandsMakers
 {
@@ -16,7 +18,7 @@ namespace EntityOH.DbCommandsMakers
 
             DbCommandsProviders.Add("System.Data.SqlClient", typeof(SqlServerCommandsMaker<>));
             DbCommandsProviders.Add("System.Data.OleDb", typeof(OleDbCommandsMaker<>));
-            DbCommandsProviders.Add("System.Data.SqlServerCe", typeof(SqlServerCompactCommandsMaker<>));
+            //DbCommandsProviders.Add("System.Data.SqlServerCe", typeof(SqlServerCompactCommandsMaker<>));
 
             // find classes that holds specific attribute
         }
@@ -42,6 +44,53 @@ namespace EntityOH.DbCommandsMakers
         /// <returns></returns>
         public static DbCommandsMaker<EmptyEntity> GetProviderCommandsMaker(string provider)
         {
+            if (!DbCommandsProviders.ContainsKey(provider))
+            {
+                // try to find the type that implements this provider
+                Type DbCommandsType = typeof(DbCommandsMaker<>);
+                FileInfo fi = new FileInfo(Assembly.GetCallingAssembly().FullName);
+
+                // search for files that ends with *.EntityOH.dll
+                var files = fi.Directory.GetFiles("*.EntityOH.dll");
+
+                foreach(var file in files)
+                {
+                    Assembly loadedAssembly= Assembly.LoadFrom(file.FullName);
+                
+                    // get all types from the calling assembly
+                    var AllTypes = loadedAssembly.GetTypes();
+
+                    var DbMakerTypes = (from x in AllTypes
+                                        where
+                                            x.IsGenericType == true
+                                            &&
+                                            x.BaseType != null
+                                            &&
+                                            x.BaseType.IsGenericType == true
+                                            &&
+                                            x.BaseType.GetGenericTypeDefinition().Equals(DbCommandsType) == true
+                                        select x).ToArray();
+
+                    foreach (Type dbmaker in DbMakerTypes)
+                    {
+                        var attr = dbmaker.GetCustomAttributes(typeof(Attributes.CommandsMakerAttribute), false).FirstOrDefault() as Attributes.CommandsMakerAttribute;
+
+                        if (attr != null)
+                        {
+                            if (attr.Key.Equals(provider, StringComparison.OrdinalIgnoreCase))
+                            {
+                                RegisterDbCommandsMaker(provider, dbmaker);
+                                goto Existing;
+                            }
+                        }
+                    }
+                }
+                
+                throw new NotImplementedException("This " + provider + " is not implemented yet.");
+            }
+
+            Existing:
+
             Type dbs = DbCommandsProviders[provider];
 
             DbCommandsMaker<EmptyEntity> EmptyDbCommand;

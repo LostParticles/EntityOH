@@ -323,16 +323,6 @@ namespace EntityOH.Controllers.Connections
             return data;
         }
 
-        /// <summary>
-        /// Reset the identity of the table to the required seed.
-        /// </summary>
-        /// <param name="tableName"></param>
-        /// <param name="seed"></param>
-        public void ResetIdentity(string tableName, int seed = 0)
-        {
-            string g = string.Format("DBCC CHECKIDENT ({0}, reseed, {1})", tableName, seed);
-            this.Execute(g);
-        }
 
         #endregion
 
@@ -347,73 +337,34 @@ namespace EntityOH.Controllers.Connections
         #endregion
 
 
-        public ICollection<TableInformation> GetTablesInformation()
+
+        /// <summary>
+        /// Get schema tables based on the underlieng implementation of the ADO.NET provider
+        /// </summary>
+        /// <returns></returns>
+        internal DataTable GetSchemaTables()
         {
-            DataTable dt;
+            OpenConnection();
 
-            if (Provider.EndsWith("OLEDB", StringComparison.OrdinalIgnoreCase))
-            {
-                OpenConnection();
+            DataTable dt = _InternalConnection.GetSchema("Tables", new string[] { null, null, null, "TABLE" });
 
-                var ole_connection = (System.Data.OleDb.OleDbConnection)_InternalConnection;
+            CloseConnection();
+            return dt;
+        }
 
-                //dt = ole_connection.GetOleDbSchemaTable(System.Data.OleDb.OleDbSchemaGuid.Tables, new object[] { null, null, null, "TABLE" });
+        /// <summary>
+        /// Get schema columns of table based on the underlieng implementation of the ADO.NET provider
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
+        internal DataTable GetSchemaTableColumns(string tableName)
+        {
+            OpenConnection();
+            DataTable dcs = _InternalConnection.GetSchema("Columns", new string[] { null, null, tableName });
+            CloseConnection();
 
-                dt = _InternalConnection.GetSchema("Tables", new string[] { null, null, null, "TABLE" });
+            return dcs;
 
-                CloseConnection();
-            }
-            else
-            {
-                dt = ExecuteDataTable("SELECT * FROM INFORMATION_SCHEMA.TABLES");
-            }
-            
-            List<TableInformation> Tables = new List<TableInformation>();
-
-            foreach (DataRow row in dt.Rows)
-            {
-                Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-                for (int i = 0; i < dt.Columns.Count; i++)
-                {
-                    values.Add(dt.Columns[i].ColumnName, row[i].ToString());
-                }
-
-                Tables.Add(new TableInformation(values));
-            }
-
-            foreach (var tbl in Tables)
-            {
-                DataTable dcs;
-                if (Provider.EndsWith("OLEDB", StringComparison.OrdinalIgnoreCase))
-                {
-                    OpenConnection();
-                    dcs = _InternalConnection.GetSchema("Columns", new string[] { null, null,  tbl.Name });
-                    CloseConnection();
-                }
-                else
-                {
-                    dcs = ExecuteDataTable("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" + tbl.Name + "'");
-                }
-                List<ColumnInformation> columns = new List<ColumnInformation>();
-                foreach (DataRow row in dcs.Rows)
-                {
-                    Dictionary<string, string> c_values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-                    for (int i = 0; i < dcs.Columns.Count; i++)
-                    {
-                        c_values.Add(dcs.Columns[i].ColumnName, row[i].ToString());
-                    }
-
-                    columns.Add(new ColumnInformation(c_values));
-
-                }
-
-                tbl.Columns = columns;
-            }
-
-            return Tables;
-            
         }
     }
 }

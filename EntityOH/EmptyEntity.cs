@@ -9,7 +9,7 @@ namespace EntityOH
     /// The empty entity doesn't have any inner information. it contains nothing.
     /// It is used internally in the library.
     /// </summary>
-    public class EmptyEntity
+    public sealed class EmptyEntity
     {
 
     }

@@ -438,7 +438,8 @@ namespace EntityOH
         {
             get
             {
-                return _UnderlyingConnection.GetTablesInformation();
+                var ee = new EntityController<EmptyEntity>(_UnderlyingConnection);
+                return ee.GetTablesInformation();
             }
         }
     }

@@ -6,9 +6,11 @@ using System.Data.SqlClient;
 using System.Data.Common;
 using System.Data;
 using EntityOH.Controllers;
+using EntityOH.Attributes;
 
 namespace EntityOH.DbCommandsMakers
 {
+    [CommandsMaker("System.Data.SqlClient")]
     public class SqlServerCommandsMaker<Entity> : DbCommandsMaker<Entity>
     {
 
@@ -19,7 +21,7 @@ namespace EntityOH.DbCommandsMakers
         }
 
 
-        public override bool SupportsMultipleQueries
+        public override bool CanReturnIdentityAfterInsert
         {
             get { return true; }
         }
@@ -27,7 +29,7 @@ namespace EntityOH.DbCommandsMakers
 
         public override DbCommand GetIdentityCommand()
         {
-            SqlCommand sc = new SqlCommand("SELECT @@IDENTITY");
+            SqlCommand sc = new SqlCommand("SELECT SCOPE_IDENTITY()");
             return sc;
         }
 
@@ -346,6 +348,14 @@ namespace EntityOH.DbCommandsMakers
         public override DbCommandsMaker<AnyEntity> GetThisMaker<AnyEntity>()
         {
             return new SqlServerCommandsMaker<AnyEntity>(new EntityRuntime<AnyEntity>());
+        }
+
+        public override string TablesSchemaSelectStatement
+        {
+            get
+            {
+                return "SELECT * FROM INFORMATION_SCHEMA.TABLES";
+            }
         }
 
     }

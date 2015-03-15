@@ -1,0 +1,12 @@
+
+The library supports some sort of plug-in
+
+it searches for a class that it inherited from 
+	DbCommandsMaker<Entity>  
+in dll files  on this pattern  *.EntityOH.dll
+
+so that we can separate the files and load only necessary modules.
+
+
+check Providers folder  SqlServerCe.EntityOH  and the attribute there.
+

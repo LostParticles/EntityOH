@@ -22,5 +22,11 @@ namespace EntityOHSamples
         public string Phone { get; set; }
 
 
+        public int IntegerNumber { get; set; }
+
+
+
+
+
     }
 }

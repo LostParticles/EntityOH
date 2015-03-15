@@ -55,7 +55,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Data.SqlServerCe, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -91,7 +90,9 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="MaddyExcel.xlsx" />
+    <Content Include="MaddyExcel.xlsx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -103,19 +104,32 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Maddy.sdf" />
+    <Content Include="Maddy.sdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="MaddyAccess.mdb">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="MaddyExpress.mdf" />
+    <Content Include="MaddyExpress.mdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="MaddyExpress_log.ldf">
       <DependentUpon>MaddyExpress.mdf</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EntityOH\EntityOH.csproj">
       <Project>{0BDF3658-B011-4EF6-ACB9-0AA578563106}</Project>
       <Name>EntityOH</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Postgres.EntityOH\Postgres.EntityOH.csproj">
+      <Project>{48d99ac9-229b-4b8b-9fa3-0466cad19d93}</Project>
+      <Name>Postgres.EntityOH</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SqlServerCe.EntityOH\SqlServerCe.EntityOH.csproj">
+      <Project>{121f0504-27a0-4e7d-beed-d470053eff85}</Project>
+      <Name>SqlServerCe.EntityOH</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

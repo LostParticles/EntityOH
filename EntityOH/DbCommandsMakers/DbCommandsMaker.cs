@@ -60,13 +60,22 @@ namespace EntityOH.DbCommandsMakers
         /// <summary>
         /// Indicates that the database can execute multiple queries in the same time in one sql statement.
         /// </summary>
-        abstract public bool SupportsMultipleQueries { get; }
+        abstract public bool CanReturnIdentityAfterInsert { get; }
 
         public abstract DbConnection GetNewConnection(string connectionString);
 
         public abstract DbCommand GetNewCommand();
 
         public abstract DbCommandsMaker<AnyEntity> GetThisMaker<AnyEntity>();
+
+
+        public virtual string TablesSchemaSelectStatement
+        {
+            get
+            {
+                return string.Empty;
+            }
+        }
 
     }
 }

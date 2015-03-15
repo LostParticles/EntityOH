@@ -13,6 +13,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using EntityOH.DbCommandsMakers;
 using System.Text.RegularExpressions;
+using EntityOH.Schema;
 
 
 namespace EntityOH.Controllers
@@ -782,8 +783,9 @@ namespace EntityOH.Controllers
             long result = 0;
             using (var CountCommand = DatabaseCommands.GetCountCommand())
             {
-                _LastSqlStatement = CountCommand.CommandText;
+                _LastSqlStatement = CountCommand.CommandText;                
                  result = long.Parse(_Connection.ExecuteScalar(CountCommand).ToString());
+                 
                  
             }
             return result;
@@ -887,7 +889,7 @@ namespace EntityOH.Controllers
                 {
                     object identity = null;
 
-                    if (DatabaseCommands.SupportsMultipleQueries)
+                    if (DatabaseCommands.CanReturnIdentityAfterInsert)
                     {
                         //update identity field in entity.
                         identity = _Connection.ExecuteScalar(command);
@@ -927,6 +929,15 @@ namespace EntityOH.Controllers
             get
             {
                 return _LastSqlStatement;
+            }
+        }
+
+        private int _LastReturnValue;
+        public int LastReturnValue
+        {
+            get
+            {
+                return _LastReturnValue;
             }
         }
 
@@ -1043,7 +1054,7 @@ namespace EntityOH.Controllers
                 }
 
                 _LastSqlStatement = command.CommandText;
-                _Connection.ExecuteNonQuery(command);
+                _LastReturnValue =  _Connection.ExecuteNonQuery(command);
             }
             _Connection.CloseConnection();
         }
@@ -1125,9 +1136,24 @@ namespace EntityOH.Controllers
             using (DbCommand command = DatabaseCommands.GetDropTableCommand())
             {
                 _LastSqlStatement = command.CommandText;
-                _Connection.ExecuteNonQuery(command);
+                _LastReturnValue = _Connection.ExecuteNonQuery(command);
             }
             _Connection.CloseConnection();            
         }
+
+
+        /// <summary>
+        /// Reset the identity of the table to the required seed.
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="seed"></param>
+        public void ResetIdentity(string tableName, int seed = 0)
+        {
+            string g = string.Format("DBCC CHECKIDENT ({0}, reseed, {1})", tableName, seed);
+            this.Execute(g);
+        }
+
+
+
     }
 }

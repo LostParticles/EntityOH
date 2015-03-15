@@ -6,10 +6,12 @@ using System.Data.Common;
 
 using System.Data.OleDb;
 using EntityOH.Controllers;
+using EntityOH.Attributes;
 
 
 namespace EntityOH.DbCommandsMakers
 {
+    [CommandsMaker("System.Data.OleDb")]
     public class OleDbCommandsMaker<Entity> : DbCommandsMaker<Entity>
     {
         public OleDbCommandsMaker(EntityRuntime<Entity> entityRuntimeInformation)
@@ -18,7 +20,7 @@ namespace EntityOH.DbCommandsMakers
         }
 
         
-        public override bool SupportsMultipleQueries
+        public override bool CanReturnIdentityAfterInsert
         {
             get { throw new NotImplementedException(); }
         }
@@ -112,5 +114,6 @@ namespace EntityOH.DbCommandsMakers
         {
             return new OleDbCommandsMaker<AnyEntity>(new EntityRuntime<AnyEntity>());
         }
+
     }
 }

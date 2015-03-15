@@ -64,7 +64,6 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Data.SqlServerCe, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -75,6 +74,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\CommandsMakerAttribute.cs" />
     <Compile Include="Attributes\EntityAttribute.cs" />
     <Compile Include="Controllers\ControllerOptions.cs" />
     <Compile Include="DbCommandsMakers\CommandParameter.cs" />
@@ -88,7 +88,6 @@
     <Compile Include="Controllers\EntityRuntimeHelper.cs" />
     <Compile Include="DbCommandsMakers\DbCommandsMaker.cs" />
     <Compile Include="Controllers\SmartReader.cs" />
-    <Compile Include="DbCommandsMakers\SqlServerCompactCommandsMaker.cs" />
     <Compile Include="DbCommandsMakers\SqlServerCommandsMaker.cs" />
     <Compile Include="DbProbe.cs" />
     <Compile Include="DbCommandsMakers\OleDbCommandsMaker.cs" />

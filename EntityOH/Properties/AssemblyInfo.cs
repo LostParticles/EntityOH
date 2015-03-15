@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Lost Particles Network")]
 [assembly: AssemblyProduct("Entity Hydroxide")]
-[assembly: AssemblyCopyright("Copyright © 2010-2013 by Ahmed Sadek")]
+[assembly: AssemblyCopyright("Copyright © 2010-2015 by Ahmed Sadek")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
