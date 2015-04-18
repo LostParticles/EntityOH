@@ -331,6 +331,8 @@ namespace EntityOH.DbCommandsMakers
             if (type == typeof(Single)) return "Real";
             if (type == typeof(Guid)) return "UniqueIdentifier";
 
+            if (type == typeof(Boolean)) return "Bit";
+
             throw new NotImplementedException(type.ToString() + " Type doesn't have corresponding sql type");
         }
 
