@@ -57,7 +57,9 @@ namespace EntityOH.Controllers.Connections
         /// <returns></returns>
         public static SmartConnection GetSmartConnection()
         {
-            return new SmartConnection(DefaultConnectionString);
+            var cnn = ConfigurationManager.ConnectionStrings[DefaultConnectionKey];
+
+            return new SmartConnection(cnn.ConnectionString, cnn.ProviderName);
         }
 
 
